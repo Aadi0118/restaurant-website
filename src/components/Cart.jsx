@@ -15,11 +15,11 @@ export default function Cart({ cartItems, onCheckout, user }) {
       alert("Please enter a valid delivery address.");
       return;
     }
-    
+
     setIsProcessing(true);
     try {
       const transactionId = 'T' + Date.now() + Math.floor(Math.random() * 1000);
-      
+
       // Store checkout data in localStorage so we can retrieve it after redirect
       localStorage.setItem('checkoutData', JSON.stringify({
         total,
@@ -28,7 +28,7 @@ export default function Cart({ cartItems, onCheckout, user }) {
         transactionId
       }));
 
-      const response = await fetch('http://localhost:3001/api/create-payment', {
+      const response = await fetch('https://restaurant-website-8vnp.onrender.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -15,7 +15,7 @@ export default function PaymentCallback({ user, onComplete }) {
       }
 
       try {
-        const response = await fetch('http://localhost:3001/api/verify-payment', {
+        const response = await fetch('https://restaurant-website-8vnp.onrender.com', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -27,33 +27,33 @@ export default function PaymentCallback({ user, onComplete }) {
 
         if (data.success) {
           setStatus('Payment verified successfully! Creating your order...');
-          
+
           // Get checkout data from localStorage
           const checkoutDataRaw = localStorage.getItem('checkoutData');
           if (checkoutDataRaw) {
             const checkoutData = JSON.parse(checkoutDataRaw);
-            
+
             if (user) {
               saveOrder(
-                user.id, 
-                user.email, 
-                checkoutData.cartItems, 
-                checkoutData.total, 
-                checkoutData.deliveryAddress, 
+                user.id,
+                user.email,
+                checkoutData.cartItems,
+                checkoutData.total,
+                checkoutData.deliveryAddress,
                 transactionId
               );
             }
-            
+
             const finalOrderDetails = {
               items: checkoutData.cartItems,
               total: checkoutData.total,
               deliveryAddress: checkoutData.deliveryAddress,
               transactionId: transactionId
             };
-            
+
             // Clean up
             localStorage.removeItem('checkoutData');
-            
+
             // Notify App.jsx to show success screen
             setTimeout(() => {
               onComplete(finalOrderDetails);
