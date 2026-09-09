@@ -1,0 +1,306 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom: var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-links a {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.hero {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: clip; /* Ensure parallax layers don't overflow */
+  view-timeline: --hero-timeline; /* For scroll-driven parallax */
+}
+
+.hero-background {
+  position: absolute;
+  top: -15%;
+  left: 0;
+  width: 100%;
+  height: 130%; /* Taller to allow movement without showing edges */
+  background-size: cover;
+  background-position: center;
+  z-index: -2;
+}
+
+.parallax-layer {
+  animation: parallax linear both;
+  animation-timeline: --hero-timeline;
+  animation-range: cover;
+}
+
+@keyframes parallax {
+  from { transform: translateY(-5%); }
+  to { transform: translateY(15%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parallax-layer {
+    animation: none;
+  }
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 1) 100%);
+  z-index: -1;
+}
+
+.hero-content {
+  animation: fade-in-up 1.5s ease-out forwards;
+}
+
+.hero-content h1 {
+  margin-bottom: 1rem;
+  color: var(--color-text);
+  text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  color: var(--color-text-muted);
+  margin-bottom: 3rem;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+
+.menu-section {
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.separator {
+  width: 60px;
+  height: 2px;
+  background-color: var(--color-accent);
+  margin: 0 auto;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-xl);
+}
+
+@media (min-width: 768px) {
+  .menu-grid {
+    grid-template-columns: 1.2fr 1fr;
+    align-items: center;
+  }
+}
+
+.menu-items-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: var(--glass-border);
+  padding: 1rem;
+  border-radius: 8px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: transparent;
+}
+
+.menu-item:hover {
+  transform: translateX(10px) scale(1.02);
+  background: var(--color-surface);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  border-bottom-color: transparent;
+}
+
+.menu-item h3 {
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.menu-item p {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin: 0;
+  max-width: 80%;
+}
+
+.price {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+.menu-image {
+  position: relative;
+}
+
+.menu-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  transition: transform 0.5s ease;
+}
+
+.menu-image:hover img {
+  transform: scale(1.02);
+}
+
+.contact-section {
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(10px);
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  text-align: center;
+  border-top: var(--glass-border);
+}
+
+.contact-info p {
+  color: var(--color-text-muted);
+  margin-bottom: 0.8rem;
+  font-size: 1.1rem;
+}
+
+.footer {
+  text-align: center;
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Scroll-driven animations & Fallbacks */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-on-scroll {
+  /* Hide by default for the JS fallback */
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fallback-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    .animate-on-scroll {
+      opacity: 1; /* Reset for CSS animation */
+      transform: none; /* Reset for CSS animation */
+      animation: fade-in-up auto linear both;
+      animation-timeline: view(block);
+      animation-range: entry 5% cover 30%;
+    }
+  }
+}
+
+.animate-on-load {
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+/* View Transitions API Customization */
+.main-content {
+  view-transition-name: main-content;
+}
+
+::view-transition-old(main-content) {
+  animation: slide-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+::view-transition-new(main-content) {
+  animation: slide-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes slide-out {
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem 1.5rem;
+  }
+  .nav-links {
+    display: none; /* simple mobile fallback */
+  }
+  .menu-grid {
+    gap: 3rem;
+  }
+}
