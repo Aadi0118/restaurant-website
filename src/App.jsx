@@ -84,13 +84,18 @@ function App() {
         { threshold: 0.1 }
       );
 
-      document.querySelectorAll('.animate-on-scroll').forEach((el) => {
-        observer.observe(el);
-      });
+      const timeoutId = setTimeout(() => {
+        document.querySelectorAll('.animate-on-scroll').forEach((el) => {
+          observer.observe(el);
+        });
+      }, 50);
 
-      return () => observer.disconnect();
+      return () => {
+        clearTimeout(timeoutId);
+        observer.disconnect();
+      };
     }
-  }, [currentView]);
+  }, [currentView, homeMenuItems]);
 
   const navigateWithTransition = (updateFunc) => {
     if (!document.startViewTransition) {
