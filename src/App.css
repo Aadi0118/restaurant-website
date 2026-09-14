@@ -356,3 +356,93 @@
   }
 }
 
+/* --- CATEGORY ACCORDION STYLES --- */
+.category-container {
+  margin-bottom: 1.5rem;
+  background: rgba(30, 41, 59, 0.4);
+  border: var(--glass-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.category-container:hover {
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+.category-header {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.3s ease, color 0.3s ease;
+  user-select: none;
+}
+
+.category-header:hover {
+  background: rgba(244, 63, 94, 0.05);
+}
+
+.category-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--color-text);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.category-header:hover h3, .category-header.active h3 {
+  color: var(--color-accent);
+  text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+}
+
+.category-chevron {
+  color: var(--color-text-muted);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+}
+
+.category-header:hover .category-chevron, .category-header.active .category-chevron {
+  color: var(--color-accent);
+}
+
+.category-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.category-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.category-content.expanded {
+  grid-template-rows: 1fr;
+}
+
+.category-content-inner {
+  overflow: hidden;
+  padding: 0 1.5rem;
+}
+
+.category-content.expanded .category-content-inner {
+  padding-bottom: 1.5rem;
+}
+
+/* Inner menu item tweaks */
+.category-content-inner .menu-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0;
+  padding: 1.2rem 0;
+  margin: 0;
+}
+.category-content-inner .menu-item:last-child {
+  border-bottom: none;
+}
+.category-content-inner .menu-item:hover {
+  transform: translateX(10px);
+  background: transparent;
+  box-shadow: none;
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}

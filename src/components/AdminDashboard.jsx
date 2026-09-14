@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAllOrders, getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem } from '../services/db';
-import { TrendingUp, ShoppingBag, DollarSign, Clock, LayoutDashboard, Utensils, Edit2, Trash2, Plus, X } from 'lucide-react';
+import { TrendingUp, ShoppingBag, DollarSign, Clock, LayoutDashboard, Utensils, Edit2, Trash2, Plus, X, ChevronDown } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
@@ -12,6 +12,7 @@ export default function AdminDashboard() {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({ name: '', desc: '', price: '', category: '' });
   const [isAdding, setIsAdding] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState(null);
 
   // Alarm State
   const [isAlarmRinging, setIsAlarmRinging] = useState(false);
@@ -143,6 +144,25 @@ export default function AdminDashboard() {
       }
     }
   };
+
+  const toggleCategory = (category) => {
+    setExpandedCategory(prev => prev === category ? null : category);
+  };
+
+  const groupedMenu = menuItems.reduce((acc, item) => {
+    const cat = item.category || 'Uncategorized';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {});
+
+  // Expand first category automatically when menuItems load if none is expanded
+  useEffect(() => {
+     if (menuItems.length > 0 && !expandedCategory) {
+         const firstCat = menuItems[0].category || 'Uncategorized';
+         setExpandedCategory(firstCat);
+     }
+  }, [menuItems, expandedCategory]);
 
   return (
     <div className="cart-container animate-on-load" style={{maxWidth: '1200px'}}>
@@ -353,55 +373,69 @@ export default function AdminDashboard() {
                   </form>
               )}
 
-              <div style={{ background: 'var(--color-surface-light)', borderRadius: '12px', border: 'var(--glass-border)', overflow: 'hidden' }}>
-                <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left'}}>
-                  <thead>
-                    <tr style={{background: 'rgba(0,0,0,0.2)'}}>
-                      <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Dish</th>
-                      <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Category</th>
-                      <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Description</th>
-                      <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Price</th>
-                      <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem', textAlign: 'right'}}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {menuItems.map((item, index) => (
-                      <tr 
-                          key={item.id} 
-                          style={{
-                              borderTop: '1px solid rgba(255,255,255,0.05)',
-                              transition: 'background 0.2s',
-                              background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(212, 175, 55, 0.05)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'}
-                      >
-                        <td style={{padding: '1.5rem', fontWeight: 'bold'}}>{item.name}</td>
-                        <td style={{padding: '1.5rem', fontSize: '0.85rem', color: 'var(--color-text-muted)'}}>
-                            <span style={{background: 'rgba(212,175,55,0.1)', color: 'var(--color-accent)', padding: '0.3rem 0.6rem', borderRadius: '12px'}}>{item.category || 'Uncategorized'}</span>
-                        </td>
-                        <td style={{padding: '1.5rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', maxWidth: '300px'}}>{item.desc}</td>
-                        <td style={{padding: '1.5rem', color: 'var(--color-accent)'}}>₹{Number(item.price).toFixed(2)}</td>
-                        <td style={{padding: '1.5rem', textAlign: 'right'}}>
-                            <div style={{display: 'flex', gap: '0.8rem', justifyContent: 'flex-end'}}>
-                                <button onClick={() => handleEditClick(item)} style={{color: 'var(--color-text-muted)', transition: 'color 0.2s'}} onMouseEnter={(e)=>e.currentTarget.style.color='var(--color-text)'} onMouseLeave={(e)=>e.currentTarget.style.color='var(--color-text-muted)'}>
-                                    <Edit2 size={18} />
-                                </button>
-                                <button onClick={() => handleDeleteMenu(item.id)} style={{color: '#ff4444', opacity: 0.7, transition: 'opacity 0.2s'}} onMouseEnter={(e)=>e.currentTarget.style.opacity=1} onMouseLeave={(e)=>e.currentTarget.style.opacity=0.7}>
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {menuItems.length === 0 && (
-                        <tr>
-                            <td colSpan="4" style={{padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)'}}>No menu items found. Add some dishes to start!</td>
-                        </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              {Object.keys(groupedMenu).length === 0 && (
+                  <div style={{background: 'var(--color-surface-light)', padding: '3rem', borderRadius: '12px', textAlign: 'center', color: 'var(--color-text-muted)'}}>
+                      No menu items found. Add some dishes to start!
+                  </div>
+              )}
+              {Object.entries(groupedMenu).map(([category, items]) => {
+                  const isExpanded = expandedCategory === category;
+                  return (
+                      <div key={category} className="category-container animate-on-load">
+                          <div 
+                              className={`category-header ${isExpanded ? 'active' : ''}`}
+                              onClick={() => toggleCategory(category)}
+                          >
+                              <h3>{category}</h3>
+                              <ChevronDown className={`category-chevron ${isExpanded ? 'expanded' : ''}`} size={24} />
+                          </div>
+                          <div className={`category-content ${isExpanded ? 'expanded' : ''}`}>
+                              <div className="category-content-inner">
+                                  <div style={{ background: 'var(--color-surface-light)', borderRadius: '12px', border: 'var(--glass-border)', overflow: 'hidden' }}>
+                                    <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left'}}>
+                                      <thead>
+                                        <tr style={{background: 'rgba(0,0,0,0.2)'}}>
+                                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Dish</th>
+                                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Description</th>
+                                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Price</th>
+                                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem', textAlign: 'right'}}>Actions</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {items.map((item, index) => (
+                                          <tr 
+                                              key={item.id} 
+                                              style={{
+                                                  borderTop: '1px solid rgba(255,255,255,0.05)',
+                                                  transition: 'background 0.2s',
+                                                  background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'
+                                              }}
+                                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(212, 175, 55, 0.05)'}
+                                              onMouseLeave={(e) => e.currentTarget.style.background = index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'}
+                                          >
+                                            <td style={{padding: '1rem 1.5rem', fontWeight: 'bold'}}>{item.name}</td>
+                                            <td style={{padding: '1rem 1.5rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', maxWidth: '300px'}}>{item.desc}</td>
+                                            <td style={{padding: '1rem 1.5rem', color: 'var(--color-accent)'}}>₹{Number(item.price).toFixed(2)}</td>
+                                            <td style={{padding: '1rem 1.5rem', textAlign: 'right'}}>
+                                                <div style={{display: 'flex', gap: '0.8rem', justifyContent: 'flex-end'}}>
+                                                    <button onClick={() => handleEditClick(item)} style={{color: 'var(--color-text-muted)', transition: 'color 0.2s'}} onMouseEnter={(e)=>e.currentTarget.style.color='var(--color-text)'} onMouseLeave={(e)=>e.currentTarget.style.color='var(--color-text-muted)'}>
+                                                        <Edit2 size={18} />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteMenu(item.id)} style={{color: '#ff4444', opacity: 0.7, transition: 'opacity 0.2s'}} onMouseEnter={(e)=>e.currentTarget.style.opacity=1} onMouseLeave={(e)=>e.currentTarget.style.opacity=0.7}>
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  );
+              })}
           </div>
       )}
     </div>
