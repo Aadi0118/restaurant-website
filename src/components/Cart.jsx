@@ -28,7 +28,8 @@ export default function Cart({ cartItems, onCheckout, user }) {
         transactionId
       }));
 
-      const response = await fetch('/api/create-payment', {
+      const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : '/api';
+      const response = await fetch(`${API_BASE}/create-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
