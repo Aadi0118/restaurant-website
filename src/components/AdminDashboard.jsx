@@ -168,7 +168,12 @@ export default function AdminDashboard() {
       )}
       
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem'}}>
-         <h2>Control Center</h2>
+         <div style={{display: 'flex', alignItems: 'baseline', gap: '1rem'}}>
+             <h2>Control Center</h2>
+             <span style={{color: 'var(--color-accent)', fontSize: '0.8rem', background: 'rgba(212,175,55,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px'}}>
+                 v2 (Render Connected)
+             </span>
+         </div>
          
          <div style={{display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '0.4rem', borderRadius: '8px', border: 'var(--glass-border)'}}>
             <button 
