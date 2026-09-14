@@ -28,7 +28,7 @@ export default function Cart({ cartItems, onCheckout, user }) {
         transactionId
       }));
 
-      const response = await fetch('https://restaurant-website-8vnp.onrender.com', {
+      const response = await fetch('/api/create-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,8 +41,10 @@ export default function Cart({ cartItems, onCheckout, user }) {
       });
 
       const data = await response.json();
-      if (data.success && data.redirectUrl) {
-        window.location.href = data.redirectUrl;
+      const redirectUrl = data.url || data.redirectUrl || data.response?.redirectUrl || data.response?.data?.instrumentResponse?.redirectInfo?.url;
+      
+      if (data.success && redirectUrl) {
+        window.location.href = redirectUrl;
       } else {
         alert("Payment initialization failed. " + (data.message || ''));
         setIsProcessing(false);

@@ -15,7 +15,7 @@ export default function PaymentCallback({ user, onComplete }) {
       }
 
       try {
-        const response = await fetch('https://restaurant-website-8vnp.onrender.com', {
+        const response = await fetch('/api/verify-payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

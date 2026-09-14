@@ -13,6 +13,8 @@ import AdminDashboard from './components/AdminDashboard'
 import PaymentCallback from './components/PaymentCallback'
 import { getMenuItems, saveOrder } from './services/db'
 import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+import { Menu, X } from 'lucide-react';
+
 
 function App() {
   const [currentView, setCurrentView] = useState('home'); // 'home', 'login', 'order', 'cart', 'history', 'admin'
@@ -20,6 +22,7 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [homeMenuItems, setHomeMenuItems] = useState([]);
   const [lastOrderDetails, setLastOrderDetails] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const taglines = [
     { title: "Experience Culinary Excellence", subtitle: "Where tradition meets modern gastronomy." },
@@ -97,6 +100,7 @@ function App() {
     document.startViewTransition(() => {
       flushSync(() => {
         updateFunc();
+        setIsMobileMenuOpen(false);
       });
     });
   };
@@ -149,12 +153,17 @@ function App() {
     <div className="app">
       <nav className="navbar">
         <div className="logo" onClick={() => navigateWithTransition(() => setCurrentView('home'))} style={{ cursor: 'pointer' }}>Shree Family Restaurant</div>
-        <ul className="nav-links">
+        
+        <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
           {currentView === 'home' && (
             <>
-              <li><a href="#menu">Menu</a></li>
-              <li><a href="#about">About</a></li>
-              <li><a href="#contact">Contact</a></li>
+              <li><a href="#menu" onClick={() => setIsMobileMenuOpen(false)}>Menu</a></li>
+              <li><a href="#about" onClick={() => setIsMobileMenuOpen(false)}>About</a></li>
+              <li><a href="#contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</a></li>
             </>
           )}
           {currentView !== 'home' && user?.role !== 'admin' && (

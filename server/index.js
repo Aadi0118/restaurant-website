@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const crypto = require('crypto');
-const axios = require('axios');
+const { StandardCheckoutClient, StandardCheckoutPayRequest, Env } = require('@phonepe-pg/pg-sdk-node');
 
 const app = express();
 app.use(cors());
@@ -10,100 +9,63 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = 3001;
 
-// --- PHONEPE CONFIGURATION ---
-// To go to Production, replace these 4 values with your real Production Keys from the PhonePe Dashboard:
-const MERCHANT_ID = 'PGTESTPAYUAT86'; // Replace with your real Merchant ID
-const SALT_KEY = '96434309-7796-489d-8924-ab56988a6076'; // Replace with your real Salt Key
-const SALT_INDEX = 1; // Replace with your real Salt Index
-// For production, change this URL to: 'https://api.phonepe.com/apis/hermes'
-const PHONEPE_HOST = 'https://api-preprod.phonepe.com/apis/pg-sandbox';
+// --- PHONEPE V2 CONFIGURATION ---
+// Replace with your real V2 Production credentials when deploying
+const CLIENT_ID = 'YOUR_CLIENT_ID'; 
+const CLIENT_SECRET = 'YOUR_CLIENT_SECRET';
+const CLIENT_VERSION = 1;
+
+// Initialize the PhonePe client in SANDBOX environment for testing
+const client = new StandardCheckoutClient(
+    CLIENT_ID,
+    CLIENT_SECRET,
+    CLIENT_VERSION,
+    Env.SANDBOX // Change to Env.PRODUCTION for live
+);
 // -----------------------------
 
 app.post('/api/create-payment', async (req, res) => {
   try {
     const { amount, transactionId, userId } = req.body;
 
-    // Create the payload
-    const payload = {
-      merchantId: MERCHANT_ID,
-      merchantTransactionId: transactionId,
-      merchantUserId: userId || 'MUID123',
-      amount: Math.round(amount * 100), // PhonePe expects amount in paise as an integer
-      redirectUrl: `http://localhost:5173/?view=payment-callback&transactionId=${transactionId}`,
-      redirectMode: 'REDIRECT',
-      paymentInstrument: {
-        type: 'PAY_PAGE',
-      },
-    };
+    const request = StandardCheckoutPayRequest.build_request({
+        merchantOrderId: transactionId,
+        amount: Math.round(amount * 100), // Amount in paise
+        redirectUrl: `https://shree-restaurant-seven.vercel.app/?view=payment-callback&transactionId=${transactionId}`,
+        callbackUrl: `https://shree-restaurant-seven.vercel.app/api/webhook`, 
+        mobileNumber: "9999999999" // Optional
+    });
 
-    // Base64 encode the payload
-    const base64EncodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64');
-
-    // Calculate Checksum: SHA256(base64EncodedPayload + "/pg/v1/pay" + saltKey) + "###" + saltIndex
-    const stringToHash = base64EncodedPayload + '/pg/v1/pay' + SALT_KEY;
-    const sha256 = crypto.createHash('sha256').update(stringToHash).digest('hex');
-    const checksum = sha256 + '###' + SALT_INDEX;
-
-    const options = {
-      method: 'POST',
-      url: `${PHONEPE_HOST}/pg/v1/pay`,
-      headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
-        'X-VERIFY': checksum,
-      },
-      data: {
-        request: base64EncodedPayload,
-      },
-    };
-
-    const response = await axios.request(options);
-
-    if (response.data.success) {
-      // Return the URL to the PhonePe checkout page
-      res.json({
+    const response = await client.pay(request);
+    
+    res.json({
         success: true,
-        redirectUrl: response.data.data.instrumentResponse.redirectInfo.url,
-      });
-    } else {
-      res.status(400).json({ success: false, message: response.data.message });
-    }
+        response: response,
+        transactionId: transactionId
+    });
+
   } catch (error) {
-    console.error('Error creating payment:', error.response?.data || error.message);
-    res.status(500).json({ success: false, message: 'Internal Server Error' });
+    console.error('Error generating V2 payment request:', error.message);
+    res.status(500).json({ success: false, error: 'Payment initialization failed' });
   }
 });
 
 app.post('/api/verify-payment', async (req, res) => {
   try {
     const { transactionId } = req.body;
-
-    // Checksum for status check: SHA256("/pg/v1/status/" + merchantId + "/" + transactionId + saltKey) + "###" + saltIndex
-    const stringToHash = `/pg/v1/status/${MERCHANT_ID}/${transactionId}` + SALT_KEY;
-    const sha256 = crypto.createHash('sha256').update(stringToHash).digest('hex');
-    const checksum = sha256 + '###' + SALT_INDEX;
-
-    const options = {
-      method: 'GET',
-      url: `${PHONEPE_HOST}/pg/v1/status/${MERCHANT_ID}/${transactionId}`,
-      headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
-        'X-VERIFY': checksum,
-        'X-MERCHANT-ID': MERCHANT_ID,
-      },
-    };
-
-    const response = await axios.request(options);
-
-    if (response.data.success && response.data.code === 'PAYMENT_SUCCESS') {
-      res.json({ success: true, message: 'Payment successful', data: response.data.data });
+    
+    const response = await client.checkStatus(transactionId);
+    
+    // Check if the payment status is successful
+    if (response && response.code === 'PAYMENT_SUCCESS') {
+      res.json({ success: true, status: 'SUCCESS', details: response });
     } else {
-      res.status(400).json({ success: false, message: 'Payment failed or pending', data: response.data.data });
+      res.json({ success: false, status: response?.code || 'PENDING' });
     }
+
   } catch (error) {
-    console.error('Error verifying payment:', error.response?.data || error.message);
-    res.status(500).json({ success: false, message: 'Internal Server Error' });
+    console.error('Error verifying V2 payment:', error.message);
+    res.status(500).json({ success: false, error: 'Verification failed' });
   }
 });
 
