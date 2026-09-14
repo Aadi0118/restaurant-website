@@ -15,7 +15,7 @@ export default function PaymentCallback({ user, onComplete }) {
       }
 
       try {
-        const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : '/api';
+        const API_BASE = 'https://restaurant-website-8vnp.onrender.com/api';
         const response = await fetch(`${API_BASE}/verify-payment`, {
           method: 'POST',
           headers: {

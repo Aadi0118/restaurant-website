@@ -119,7 +119,7 @@ export const getAllOrders = () => {
 };
 
 // --- Menu Items CRUD ---
-const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : '/api';
+const API_BASE = 'https://restaurant-website-8vnp.onrender.com/api';
 
 export const getMenuItems = async () => {
   const response = await fetch(`${API_BASE}/menuItems`);
