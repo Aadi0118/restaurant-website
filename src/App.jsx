@@ -45,7 +45,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    setHomeMenuItems(getMenuItems());
+    getMenuItems().then(setHomeMenuItems).catch(console.error);
   }, [currentView]);
 
   // Restore session

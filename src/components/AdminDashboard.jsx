@@ -19,7 +19,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setOrders(getAllOrders());
-    setMenuItems(getMenuItems());
+    getMenuItems().then(setMenuItems).catch(console.error);
 
     const handleNewOrder = () => {
         setIsAlarmRinging(true);
@@ -114,21 +114,23 @@ export default function AdminDashboard() {
     setFormData({ name: '', desc: '', price: '', category: '' });
   };
 
-  const handleSaveMenu = (e) => {
+  const handleSaveMenu = async (e) => {
     e.preventDefault();
     if (isAdding) {
-      addMenuItem(formData.name, formData.desc, formData.price, formData.category);
+      await addMenuItem(formData.name, formData.desc, formData.price, formData.category);
     } else {
-      updateMenuItem(editingItem, formData.name, formData.desc, formData.price, formData.category);
+      await updateMenuItem(editingItem, formData.name, formData.desc, formData.price, formData.category);
     }
-    setMenuItems(getMenuItems());
+    const updated = await getMenuItems();
+    setMenuItems(updated);
     handleCancelEdit();
   };
 
-  const handleDeleteMenu = (id) => {
+  const handleDeleteMenu = async (id) => {
     if (window.confirm('Are you sure you want to delete this menu item?')) {
-      deleteMenuItem(id);
-      setMenuItems(getMenuItems());
+      await deleteMenuItem(id);
+      const updated = await getMenuItems();
+      setMenuItems(updated);
     }
   };
 

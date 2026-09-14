@@ -9,6 +9,50 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = 3001;
 
+// --- IN-MEMORY DATABASE ---
+let menuItems = [
+  { id: 'menu-1', name: 'Truffle Risotto', desc: 'Arborio rice, black truffle, aged parmesan, gold leaf.', price: 45, category: 'Main Course' },
+  { id: 'menu-2', name: 'Wagyu A5 Striploin', desc: 'Charred asparagus, bone marrow jus, smoked salt.', price: 120, category: 'Main Course' },
+  { id: 'menu-3', name: 'Lobster Thermidor', desc: 'Cognac cream, gruyere crust, fine herbs.', price: 85, category: 'Main Course' },
+  { id: 'menu-4', name: 'Butter Naan', desc: 'Soft and fluffy Indian bread cooked in a tandoor.', price: 5, category: 'Roti & Tandoor' },
+];
+
+// --- MENU ITEMS API ---
+app.get('/api/menuItems', (req, res) => {
+  res.json(menuItems);
+});
+
+app.post('/api/menuItems', (req, res) => {
+  const { name, desc, price, category } = req.body;
+  const newItem = {
+    id: `menu-${Date.now()}`,
+    name,
+    desc,
+    price: Number(price),
+    category: category || 'Uncategorized'
+  };
+  menuItems.push(newItem);
+  res.status(201).json(newItem);
+});
+
+app.put('/api/menuItems/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, desc, price, category } = req.body;
+  const index = menuItems.findIndex(i => i.id === id);
+  if (index !== -1) {
+    menuItems[index] = { ...menuItems[index], name, desc, price: Number(price), category: category || 'Uncategorized' };
+    res.json(menuItems[index]);
+  } else {
+    res.status(404).json({ error: 'Menu item not found' });
+  }
+});
+
+app.delete('/api/menuItems/:id', (req, res) => {
+  const { id } = req.params;
+  menuItems = menuItems.filter(i => i.id !== id);
+  res.status(204).send();
+});
+
 // --- PHONEPE V2 CONFIGURATION ---
 // Replace with your real V2 Production credentials when deploying
 const CLIENT_ID = 'YOUR_CLIENT_ID'; 

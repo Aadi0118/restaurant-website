@@ -6,7 +6,7 @@ export default function OrderMenu({ onAddToCart }) {
   const [menuItems, setMenuItems] = useState([]);
 
   useEffect(() => {
-    setMenuItems(getMenuItems());
+    getMenuItems().then(setMenuItems).catch(console.error);
   }, []);
 
   return (

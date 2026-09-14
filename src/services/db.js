@@ -119,42 +119,37 @@ export const getAllOrders = () => {
 };
 
 // --- Menu Items CRUD ---
+const API_BASE = '/api';
 
-export const getMenuItems = () => {
-  initializeDB();
-  return JSON.parse(localStorage.getItem('menuItems'));
+export const getMenuItems = async () => {
+  const response = await fetch(`${API_BASE}/menuItems`);
+  if (!response.ok) throw new Error('Failed to fetch menu items');
+  return await response.json();
 };
 
-export const addMenuItem = (name, desc, price, category = 'Uncategorized') => {
-  initializeDB();
-  const items = JSON.parse(localStorage.getItem('menuItems'));
-  const newItem = {
-    id: `menu-${Date.now()}`,
-    name,
-    desc,
-    price: Number(price),
-    category
-  };
-  items.push(newItem);
-  localStorage.setItem('menuItems', JSON.stringify(items));
-  return newItem;
+export const addMenuItem = async (name, desc, price, category = 'Uncategorized') => {
+  const response = await fetch(`${API_BASE}/menuItems`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, desc, price, category })
+  });
+  if (!response.ok) throw new Error('Failed to add menu item');
+  return await response.json();
 };
 
-export const updateMenuItem = (id, name, desc, price, category = 'Uncategorized') => {
-  initializeDB();
-  const items = JSON.parse(localStorage.getItem('menuItems'));
-  const index = items.findIndex(i => i.id === id);
-  if (index !== -1) {
-    items[index] = { ...items[index], name, desc, price: Number(price), category };
-    localStorage.setItem('menuItems', JSON.stringify(items));
-    return items[index];
-  }
-  throw new Error('Menu item not found');
+export const updateMenuItem = async (id, name, desc, price, category = 'Uncategorized') => {
+  const response = await fetch(`${API_BASE}/menuItems/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, desc, price, category })
+  });
+  if (!response.ok) throw new Error('Failed to update menu item');
+  return await response.json();
 };
 
-export const deleteMenuItem = (id) => {
-  initializeDB();
-  let items = JSON.parse(localStorage.getItem('menuItems'));
-  items = items.filter(i => i.id !== id);
-  localStorage.setItem('menuItems', JSON.stringify(items));
+export const deleteMenuItem = async (id) => {
+  const response = await fetch(`${API_BASE}/menuItems/${id}`, {
+    method: 'DELETE'
+  });
+  if (!response.ok) throw new Error('Failed to delete menu item');
 };
