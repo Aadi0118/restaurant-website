@@ -9,17 +9,32 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = 3001;
 
-// --- IN-MEMORY DATABASE ---
-let menuItems = [
-  { id: 'menu-1', name: 'Truffle Risotto', desc: 'Arborio rice, black truffle, aged parmesan, gold leaf.', price: 45, category: 'Main Course' },
-  { id: 'menu-2', name: 'Wagyu A5 Striploin', desc: 'Charred asparagus, bone marrow jus, smoked salt.', price: 120, category: 'Main Course' },
-  { id: 'menu-3', name: 'Lobster Thermidor', desc: 'Cognac cream, gruyere crust, fine herbs.', price: 85, category: 'Main Course' },
-  { id: 'menu-4', name: 'Butter Naan', desc: 'Soft and fluffy Indian bread cooked in a tandoor.', price: 5, category: 'Roti & Tandoor' },
-];
+const fs = require('fs');
+const path = require('path');
+
+const MENU_FILE = path.join(__dirname, 'menu.json');
+
+// Ensure menu file exists and is empty by default (no pre-existing menu)
+if (!fs.existsSync(MENU_FILE)) {
+  fs.writeFileSync(MENU_FILE, JSON.stringify([]));
+}
+
+function getMenu() {
+  try {
+    const data = fs.readFileSync(MENU_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    return [];
+  }
+}
+
+function saveMenu(items) {
+  fs.writeFileSync(MENU_FILE, JSON.stringify(items, null, 2));
+}
 
 // --- MENU ITEMS API ---
 app.get('/api/menuItems', (req, res) => {
-  res.json(menuItems);
+  res.json(getMenu());
 });
 
 app.post('/api/menuItems', (req, res) => {
@@ -31,16 +46,20 @@ app.post('/api/menuItems', (req, res) => {
     price: Number(price),
     category: category || 'Uncategorized'
   };
+  const menuItems = getMenu();
   menuItems.push(newItem);
+  saveMenu(menuItems);
   res.status(201).json(newItem);
 });
 
 app.put('/api/menuItems/:id', (req, res) => {
   const { id } = req.params;
   const { name, desc, price, category } = req.body;
+  const menuItems = getMenu();
   const index = menuItems.findIndex(i => i.id === id);
   if (index !== -1) {
     menuItems[index] = { ...menuItems[index], name, desc, price: Number(price), category: category || 'Uncategorized' };
+    saveMenu(menuItems);
     res.json(menuItems[index]);
   } else {
     res.status(404).json({ error: 'Menu item not found' });
@@ -49,7 +68,9 @@ app.put('/api/menuItems/:id', (req, res) => {
 
 app.delete('/api/menuItems/:id', (req, res) => {
   const { id } = req.params;
+  let menuItems = getMenu();
   menuItems = menuItems.filter(i => i.id !== id);
+  saveMenu(menuItems);
   res.status(204).send();
 });
 
