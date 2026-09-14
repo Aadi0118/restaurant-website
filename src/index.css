@@ -1,14 +1,15 @@
 :root {
-  --font-serif: 'Playfair Display', serif;
-  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Orbitron', sans-serif;
+  --font-sans: 'Space Grotesk', sans-serif;
   
-  --color-bg: #0f172a;
-  --color-surface: rgba(30, 41, 59, 0.75);
-  --color-surface-light: rgba(51, 65, 85, 0.8);
-  --color-text: #f8fafc;
-  --color-text-muted: #94a3b8;
-  --color-accent: #f43f5e; /* Vibrant Rose Red */
-  --color-accent-hover: #e11d48;
+  --color-bg: #050510;
+  --color-surface: rgba(10, 15, 30, 0.85);
+  --color-surface-light: rgba(20, 25, 45, 0.85);
+  --color-text: #e0fbfc;
+  --color-text-muted: #8aa5af;
+  --color-accent: #00f0ff; /* Neon Cyan */
+  --color-accent-hover: #00c3d9;
+  --color-accent-alt: #ff003c; /* Neon Magenta */
   
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
@@ -17,7 +18,7 @@
   --spacing-xl: 8rem;
   --spacing-xxl: 12rem;
 
-  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-border: 1px solid rgba(0, 240, 255, 0.2);
 }
 
 *, *::before, *::after {
@@ -76,19 +77,21 @@ button {
   padding: 1rem 2rem;
   font-size: 0.9rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   border: 1px solid var(--color-accent);
   color: var(--color-accent);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   background: transparent;
-  border-radius: 4px;
+  border-radius: 0;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
 }
 
 .btn:hover {
-  background-color: var(--color-accent);
+  background-color: rgba(0, 240, 255, 0.15);
   color: #fff;
-  box-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5), inset 0 0 10px rgba(0, 240, 255, 0.3);
   transform: translateY(-2px);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
 }
 
 .btn:active {
@@ -96,15 +99,16 @@ button {
 }
 
 .btn-primary {
-  background-color: var(--color-accent);
-  color: #fff;
-  box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
+  background-color: rgba(0, 240, 255, 0.1);
+  color: var(--color-accent);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: transparent;
-  color: var(--color-accent);
-  box-shadow: 0 0 25px rgba(244, 63, 94, 0.6);
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.8);
+  text-shadow: none;
 }
 
 /* Custom Scrollbar */
