@@ -116,21 +116,31 @@ export default function AdminDashboard() {
 
   const handleSaveMenu = async (e) => {
     e.preventDefault();
-    if (isAdding) {
-      await addMenuItem(formData.name, formData.desc, formData.price, formData.category);
-    } else {
-      await updateMenuItem(editingItem, formData.name, formData.desc, formData.price, formData.category);
+    try {
+      if (isAdding) {
+        await addMenuItem(formData.name, formData.desc, formData.price, formData.category);
+      } else {
+        await updateMenuItem(editingItem, formData.name, formData.desc, formData.price, formData.category);
+      }
+      const updated = await getMenuItems();
+      setMenuItems(updated);
+      handleCancelEdit();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save menu item. Did you restart the backend server (node server/index.js)?");
     }
-    const updated = await getMenuItems();
-    setMenuItems(updated);
-    handleCancelEdit();
   };
 
   const handleDeleteMenu = async (id) => {
     if (window.confirm('Are you sure you want to delete this menu item?')) {
-      await deleteMenuItem(id);
-      const updated = await getMenuItems();
-      setMenuItems(updated);
+      try {
+        await deleteMenuItem(id);
+        const updated = await getMenuItems();
+        setMenuItems(updated);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to delete menu item. Is the backend server running?");
+      }
     }
   };
 
