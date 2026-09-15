@@ -13,7 +13,7 @@ import AdminDashboard from './components/AdminDashboard'
 import PaymentCallback from './components/PaymentCallback'
 import { getMenuItems, saveOrder } from './services/db'
 import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ArrowLeft } from 'lucide-react';
 
 
 function App() {
@@ -23,6 +23,7 @@ function App() {
   const [homeMenuItems, setHomeMenuItems] = useState([]);
   const [lastOrderDetails, setLastOrderDetails] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [homeSelectedCategory, setHomeSelectedCategory] = useState(null);
   
   const taglines = [
     { title: "Experience Culinary Excellence", subtitle: "Where tradition meets modern gastronomy." },
@@ -152,6 +153,14 @@ function App() {
     });
   };
 
+  const groupedHomeMenu = homeMenuItems.reduce((acc, item) => {
+    const cat = item.category || 'Uncategorized';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {});
+  const homeCategories = Object.keys(groupedHomeMenu);
+
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -218,20 +227,86 @@ function App() {
 
               <div className="menu-grid">
                 <div className="menu-items-col">
-                  {homeMenuItems.map(item => (
-                    <div key={item.id} className="menu-item animate-on-scroll">
-                      <div className="menu-item-text">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                          <h3 style={{ margin: 0 }}>{item.name}</h3>
-                          {item.category && (
-                            <span style={{ background: 'rgba(212,175,55,0.1)', color: 'var(--color-accent)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.category}</span>
-                          )}
+                  {homeCategories.length === 0 && <p style={{textAlign: 'center', color: 'var(--color-text-muted)'}}>Loading menu...</p>}
+                  
+                  {!homeSelectedCategory ? (
+                    <div className="categories-list animate-on-scroll" style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                      {homeCategories.map(category => (
+                        <div 
+                          key={category} 
+                          className="category-card"
+                          onClick={() => setHomeSelectedCategory(category)}
+                          style={{
+                            padding: '1.5rem',
+                            background: 'var(--color-surface-light)',
+                            border: 'var(--glass-border)',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(212, 175, 55, 0.1)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'var(--color-surface-light)';
+                            e.currentTarget.style.transform = 'none';
+                          }}
+                        >
+                          <h3 style={{margin: 0, fontSize: '1.3rem'}}>{category}</h3>
+                          <span style={{color: 'var(--color-text-muted)', fontSize: '0.9rem'}}>{groupedHomeMenu[category].length} items</span>
                         </div>
-                        <p>{item.desc}</p>
-                      </div>
-                      <span className="price">₹{item.price}</span>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="category-items animate-on-scroll">
+                      <button 
+                        onClick={() => setHomeSelectedCategory(null)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--color-accent)',
+                          cursor: 'pointer',
+                          padding: '0 0 1.5rem 0',
+                          fontSize: '1rem',
+                          fontWeight: 'bold',
+                          transition: 'color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                      >
+                        <ArrowLeft size={20} /> Back to Categories
+                      </button>
+                      
+                      <h3 style={{marginBottom: '1.5rem', fontSize: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem'}}>{homeSelectedCategory}</h3>
+                      
+                      <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                        {groupedHomeMenu[homeSelectedCategory].map(item => (
+                          <div key={item.id} className="menu-item" style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '1rem',
+                            background: 'rgba(0,0,0,0.2)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255,255,255,0.05)'
+                          }}>
+                            <div className="menu-item-text">
+                              <h3 style={{margin: 0, fontSize: '1.2rem'}}>{item.name}</h3>
+                              <p style={{fontSize: '0.85rem', marginTop: '0.4rem', color: 'var(--color-text-muted)'}}>{item.desc}</p>
+                            </div>
+                            <span className="price" style={{color: 'var(--color-accent)', fontWeight: 'bold', fontSize: '1.1rem'}}>₹{Number(item.price).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="menu-image animate-on-scroll">
