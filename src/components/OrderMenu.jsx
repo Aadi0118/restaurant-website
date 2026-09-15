@@ -10,9 +10,6 @@ export default function OrderMenu({ onAddToCart }) {
   useEffect(() => {
     getMenuItems().then(items => {
       setMenuItems(items);
-      // Auto-expand first category if exists
-      const categories = [...new Set(items.map(item => item.category || 'Uncategorized'))];
-      if (categories.length > 0) setExpandedCategory(categories[0]);
     }).catch(console.error);
   }, []);
 
