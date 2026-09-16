@@ -295,10 +295,10 @@ function App() {
               </div>
               <div className="about-content animate-on-scroll" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '3rem' }}>
                 <p style={{ color: 'var(--color-text-muted)', fontSize: '1.15rem', marginBottom: '1.5rem', lineHeight: '1.8' }}>
-                  Founded in 2026, Shree Family Restaurant was born from a passion for culinary excellence and a desire to create unforgettable dining experiences. We source only the finest seasonal ingredients, combining time-honored classic techniques with modern gastronomic innovation.
+                  Food is more than just sustenance; it is the universal language of love, memory, and belonging. Shree Family Restaurant was born from a simple belief: that the most profound moments in life happen around a shared table. Rooted in the spiritual warmth of Rishikesh, our kitchen is a tribute to the recipes passed down through generations—crafted not just with spices, but with soul.
                 </p>
                 <p style={{ color: 'var(--color-text-muted)', fontSize: '1.15rem', lineHeight: '1.8' }}>
-                  Our mission is to transport our guests through taste, offering an ambiance of understated luxury where every detail is meticulously crafted. Welcome to our table.
+                  When you dine with us, you aren't just a customer; you become part of our extended family. Every dish we serve is a story of tradition, a celebration of togetherness, and an invitation to pause, connect, and savor the beautiful moments that truly matter. Welcome home.
                 </p>
               </div>
             </section>
