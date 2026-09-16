@@ -118,7 +118,6 @@ export const getAllOrders = async () => {
 };
 
 // --- Menu Items CRUD ---
-const API_BASE = 'https://restaurant-website-8vnp.onrender.com/api';
 
 export const getMenuItems = async () => {
   const response = await fetch(`${API_BASE}/menuItems`);
