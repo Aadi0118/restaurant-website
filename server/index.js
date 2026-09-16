@@ -1,5 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const { StandardCheckoutClient, StandardCheckoutPayRequest, Env } = require('@phonepe-pg/pg-sdk-node');
 
 const app = express();
@@ -7,71 +9,91 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-const fs = require('fs');
-const path = require('path');
-
-const MENU_FILE = path.join(__dirname, 'menu.json');
-
-// Ensure menu file exists and is empty by default (no pre-existing menu)
-if (!fs.existsSync(MENU_FILE)) {
-  fs.writeFileSync(MENU_FILE, JSON.stringify([]));
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI;
+if (MONGODB_URI) {
+  mongoose.connect(MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB Atlas'))
+    .catch((error) => console.error('Error connecting to MongoDB:', error.message));
+} else {
+  console.warn('WARNING: MONGODB_URI environment variable not set. Database operations will fail.');
 }
 
-function getMenu() {
-  try {
-    const data = fs.readFileSync(MENU_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (err) {
-    return [];
-  }
-}
+// Menu Item Schema
+const menuItemSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  desc: { type: String },
+  price: { type: Number, required: true },
+  category: { type: String, default: 'Uncategorized' }
+});
 
-function saveMenu(items) {
-  fs.writeFileSync(MENU_FILE, JSON.stringify(items, null, 2));
-}
+const MenuItem = mongoose.model('MenuItem', menuItemSchema);
 
 // --- MENU ITEMS API ---
-app.get('/api/menuItems', (req, res) => {
-  res.json(getMenu());
-});
-
-app.post('/api/menuItems', (req, res) => {
-  const { name, desc, price, category } = req.body;
-  const newItem = {
-    id: `menu-${Date.now()}`,
-    name,
-    desc,
-    price: Number(price),
-    category: category || 'Uncategorized'
-  };
-  const menuItems = getMenu();
-  menuItems.push(newItem);
-  saveMenu(menuItems);
-  res.status(201).json(newItem);
-});
-
-app.put('/api/menuItems/:id', (req, res) => {
-  const { id } = req.params;
-  const { name, desc, price, category } = req.body;
-  const menuItems = getMenu();
-  const index = menuItems.findIndex(i => i.id === id);
-  if (index !== -1) {
-    menuItems[index] = { ...menuItems[index], name, desc, price: Number(price), category: category || 'Uncategorized' };
-    saveMenu(menuItems);
-    res.json(menuItems[index]);
-  } else {
-    res.status(404).json({ error: 'Menu item not found' });
+app.get('/api/menuItems', async (req, res) => {
+  try {
+    const items = await MenuItem.find({}, '-_id -__v');
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch menu items' });
   }
 });
 
-app.delete('/api/menuItems/:id', (req, res) => {
-  const { id } = req.params;
-  let menuItems = getMenu();
-  menuItems = menuItems.filter(i => i.id !== id);
-  saveMenu(menuItems);
-  res.status(204).send();
+app.post('/api/menuItems', async (req, res) => {
+  try {
+    const { name, desc, price, category } = req.body;
+    const newItem = new MenuItem({
+      id: `menu-${Date.now()}`,
+      name,
+      desc,
+      price: Number(price),
+      category: category || 'Uncategorized'
+    });
+    await newItem.save();
+    
+    // Return formatted item without MongoDB specific fields
+    const formattedItem = newItem.toObject();
+    delete formattedItem._id;
+    delete formattedItem.__v;
+    
+    res.status(201).json(formattedItem);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create menu item' });
+  }
+});
+
+app.put('/api/menuItems/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, desc, price, category } = req.body;
+    
+    const updatedItem = await MenuItem.findOneAndUpdate(
+      { id },
+      { name, desc, price: Number(price), category: category || 'Uncategorized' },
+      { new: true, select: '-_id -__v' }
+    );
+    
+    if (updatedItem) {
+      res.json(updatedItem);
+    } else {
+      res.status(404).json({ error: 'Menu item not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update menu item' });
+  }
+});
+
+app.delete('/api/menuItems/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await MenuItem.findOneAndDelete({ id });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete menu item' });
+  }
 });
 
 // --- PHONEPE V2 CONFIGURATION ---
