@@ -5,11 +5,11 @@ const initializeDB = () => {
   if (!users) {
     users = [];
   }
-  
+
   // Ensure proper admin account always exists and overrides the old weak one
   const adminIndex = users.findIndex(u => u.role === 'admin');
   const properAdmin = { id: 'admin-master', email: 'admin@shreefamilyrestaurant.com', password: 'AdminPassword2026!', role: 'admin', name: 'Master Admin' };
-  
+
   if (adminIndex === -1) {
     users.push(properAdmin);
     localStorage.setItem('users', JSON.stringify(users));
@@ -33,7 +33,7 @@ const initializeDB = () => {
 export const registerUser = (email, password, name = 'Customer') => {
   initializeDB();
   const users = JSON.parse(localStorage.getItem('users'));
-  
+
   if (users.find(u => u.email === email)) {
     throw new Error('User already exists');
   }
@@ -54,81 +54,65 @@ export const registerUser = (email, password, name = 'Customer') => {
 export const loginUser = (email, password) => {
   initializeDB();
   const users = JSON.parse(localStorage.getItem('users'));
-  
+
   const user = users.find(u => u.email === email && u.password === password);
   if (!user) {
     throw new Error('Invalid credentials');
   }
-  
+
   return user;
 };
 
 export const googleLoginSimulate = (email, name) => {
-    initializeDB();
-    const users = JSON.parse(localStorage.getItem('users'));
-    let user = users.find(u => u.email === email);
-    
-    if (!user) {
-        user = {
-            id: `google-${Date.now()}`,
-            email,
-            password: 'google-oauth-placeholder',
-            name,
-            role: 'customer'
-        };
-        users.push(user);
-        localStorage.setItem('users', JSON.stringify(users));
-    }
-    
-    return user;
+  initializeDB();
+  const users = JSON.parse(localStorage.getItem('users'));
+  let user = users.find(u => u.email === email);
+
+  if (!user) {
+    user = {
+      id: `google-${Date.now()}`,
+      email,
+      password: 'google-oauth-placeholder',
+      name,
+      role: 'customer'
+    };
+    users.push(user);
+    localStorage.setItem('users', JSON.stringify(users));
+  }
+
+  return user;
 }
 
-export const saveOrder = (userId, userEmail, items, total, deliveryAddress = null, utr = null, status = 'pending', verificationKey = null) => {
-  initializeDB();
-  const orders = JSON.parse(localStorage.getItem('orders'));
-  
-  const newOrder = {
-    id: `ord-${Date.now()}`,
-    userId,
-    userEmail,
-    items,
-    total,
-    deliveryAddress,
-    utr,
-    status,
-    verificationKey,
-    date: new Date().toISOString()
-  };
-
-  orders.push(newOrder);
-  localStorage.setItem('orders', JSON.stringify(orders));
-  
-  // Dispatch custom event for same-tab notification
-  window.dispatchEvent(new CustomEvent('newOrderPlaced', { detail: newOrder }));
-  
-  return newOrder;
+export const saveOrder = async (userId, userEmail, items, total, deliveryAddress = null, utr = null, status = 'pending', verificationKey = null) => {
+  const response = await fetch(`${API_BASE}/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, userEmail, items, total, deliveryAddress, utr, status, verificationKey })
+  });
+  if (!response.ok) throw new Error('Failed to create order');
+  return await response.json();
 };
 
-export const updateOrderStatus = (orderId, status) => {
-  initializeDB();
-  const orders = JSON.parse(localStorage.getItem('orders'));
-  const orderIndex = orders.findIndex(o => o.id === orderId);
-  if (orderIndex > -1) {
-    orders[orderIndex].status = status;
-    localStorage.setItem('orders', JSON.stringify(orders));
-    window.dispatchEvent(new CustomEvent('newOrderPlaced'));
-  }
+export const updateOrderStatus = async (orderId, status) => {
+  const response = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  if (!response.ok) throw new Error('Failed to update order status');
+  return await response.json();
 };
 
-export const getUserOrders = (userId) => {
-  initializeDB();
-  const orders = JSON.parse(localStorage.getItem('orders'));
-  return orders.filter(o => o.userId === userId).sort((a,b) => new Date(b.date) - new Date(a.date));
+export const getUserOrders = async (userId) => {
+  const response = await fetch(`${API_BASE}/orders/user/${userId}`);
+  if (!response.ok) throw new Error('Failed to fetch user orders');
+  return await response.json();
 };
 
-export const getAllOrders = () => {
-  initializeDB();
-  return JSON.parse(localStorage.getItem('orders')).sort((a,b) => new Date(b.date) - new Date(a.date));
+export const getAllOrders = async () => {
+  const response = await fetch(`${API_BASE}/orders`);
+  if (!response.ok) throw new Error('Failed to fetch orders');
+  return await response.json();
 };
 
 // --- Menu Items CRUD ---

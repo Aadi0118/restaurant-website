@@ -32,6 +32,22 @@ const menuItemSchema = new mongoose.Schema({
 
 const MenuItem = mongoose.model('MenuItem', menuItemSchema);
 
+// Order Schema
+const orderSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  userId: { type: String, required: true },
+  userEmail: { type: String, required: true },
+  items: { type: Array, required: true },
+  total: { type: Number, required: true },
+  deliveryAddress: { type: String },
+  utr: { type: String },
+  status: { type: String, default: 'pending' },
+  verificationKey: { type: String },
+  date: { type: Date, default: Date.now }
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
 // --- MENU ITEMS API ---
 app.get('/api/menuItems', async (req, res) => {
   try {
@@ -93,6 +109,74 @@ app.delete('/api/menuItems/:id', async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete menu item' });
+  }
+});
+
+// --- ORDERS API ---
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await Order.find({}, '-_id -__v').sort({ date: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+app.get('/api/orders/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const orders = await Order.find({ userId }, '-_id -__v').sort({ date: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user orders' });
+  }
+});
+
+app.post('/api/orders', async (req, res) => {
+  try {
+    const { userId, userEmail, items, total, deliveryAddress, utr, status, verificationKey } = req.body;
+    const newOrder = new Order({
+      id: `ord-${Date.now()}`,
+      userId,
+      userEmail,
+      items,
+      total: Number(total),
+      deliveryAddress,
+      utr,
+      status: status || 'pending',
+      verificationKey,
+      date: new Date()
+    });
+    await newOrder.save();
+    
+    const formattedOrder = newOrder.toObject();
+    delete formattedOrder._id;
+    delete formattedOrder.__v;
+    
+    res.status(201).json(formattedOrder);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+app.put('/api/orders/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const updatedOrder = await Order.findOneAndUpdate(
+      { id },
+      { status },
+      { new: true, select: '-_id -__v' }
+    );
+    
+    if (updatedOrder) {
+      res.json(updatedOrder);
+    } else {
+      res.status(404).json({ error: 'Order not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update order status' });
   }
 });
 

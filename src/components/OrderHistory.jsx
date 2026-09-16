@@ -6,7 +6,9 @@ export default function OrderHistory({ user }) {
 
   useEffect(() => {
     if (user) {
-      setOrders(getUserOrders(user.id));
+      getUserOrders(user.id)
+        .then(setOrders)
+        .catch(console.error);
     }
   }, [user]);
 

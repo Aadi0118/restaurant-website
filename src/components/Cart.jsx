@@ -29,23 +29,32 @@ export default function Cart({ cartItems, onCheckout, user }) {
     setView('qr');
   };
 
-  const handleQRCompleted = () => {
+  const handleQRCompleted = async () => {
     // Generate a random 4-digit key
     const newKey = Math.floor(1000 + Math.random() * 9000).toString();
     setVerificationKey(newKey);
-
+    
     // Save order as pending
     const fullAddress = `${deliveryAddress} | Mobile: ${mobileNumber}`;
-    const newOrder = saveOrder(user.id, user.email, cartItems, total, fullAddress, null, 'pending', newKey);
-    setOrderId(newOrder.id);
-
-    setView('pin');
+    try {
+        const newOrder = await saveOrder(user.id, user.email, cartItems, total, fullAddress, null, 'pending', newKey);
+        setOrderId(newOrder.id);
+        setView('pin');
+    } catch (e) {
+        console.error(e);
+        alert("Failed to create order. Is the server running?");
+    }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (userInputKey === verificationKey) {
-      updateOrderStatus(orderId, 'accepted');
-      if (onCheckout) onCheckout();
+      try {
+          await updateOrderStatus(orderId, 'accepted');
+          if (onCheckout) onCheckout();
+      } catch (e) {
+          console.error(e);
+          alert("Failed to verify order on server.");
+      }
     } else {
       alert("Incorrect PIN. Please verify with the Admin.");
     }
@@ -85,9 +94,8 @@ export default function Cart({ cartItems, onCheckout, user }) {
         <h2>Verify Payment</h2>
         <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>
           Your order has been placed and is waiting for payment confirmation.
-          <br />Please check your whatsapp Admin will share a unique 4 digit code to you
           <br /><br />
-          The admin will provide you with a 4-digit verification PIN to confirm your order.
+          Please check your WhatsApp. The Admin will share a unique 4-digit verification code with you to confirm your order.
         </p>
 
         <div style={{ maxWidth: '300px', margin: '0 auto', marginBottom: '2rem' }}>

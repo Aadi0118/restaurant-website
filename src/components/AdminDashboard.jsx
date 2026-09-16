@@ -19,31 +19,25 @@ export default function AdminDashboard() {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    setOrders(getAllOrders());
+    const fetchOrders = async () => {
+      try {
+        const fetchedOrders = await getAllOrders();
+        setOrders(prevOrders => {
+          if (prevOrders.length > 0 && fetchedOrders.length > prevOrders.length) {
+            setIsAlarmRinging(true);
+          }
+          return fetchedOrders;
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    fetchOrders();
     getMenuItems().then(setMenuItems).catch(console.error);
 
-    const handleNewOrder = () => {
-        setIsAlarmRinging(true);
-        setOrders(getAllOrders()); // refresh orders
-    };
-
-    const handleStorage = (e) => {
-        if (e.key === 'orders') {
-            const oldOrders = JSON.parse(e.oldValue || '[]');
-            const newOrders = JSON.parse(e.newValue || '[]');
-            if (newOrders.length > oldOrders.length) {
-                handleNewOrder();
-            }
-        }
-    };
-
-    window.addEventListener('newOrderPlaced', handleNewOrder);
-    window.addEventListener('storage', handleStorage);
-
-    return () => {
-        window.removeEventListener('newOrderPlaced', handleNewOrder);
-        window.removeEventListener('storage', handleStorage);
-    };
+    const intervalId = setInterval(fetchOrders, 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
