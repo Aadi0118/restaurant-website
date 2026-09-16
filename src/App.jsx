@@ -336,7 +336,7 @@ function App() {
 
         {currentView === 'login' && <Login onLogin={handleLogin} />}
         {currentView === 'order' && <OrderMenu onAddToCart={handleAddToCart} />}
-        {currentView === 'cart' && <Cart cartItems={cartItems} user={user} />}
+        {currentView === 'cart' && <Cart cartItems={cartItems} user={user} onCheckout={() => { setCartItems([]); setCurrentView('history'); }} />}
         {currentView === 'history' && <OrderHistory user={user} />}
         {currentView === 'success' && (
           <OrderSuccess 

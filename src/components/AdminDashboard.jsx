@@ -277,7 +277,7 @@ export default function AdminDashboard() {
                           <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Order ID</th>
                           <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Date</th>
                           <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Customer</th>
-                          <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Delivery & Payment</th>
+                          <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Delivery & Verification</th>
                           <th style={{padding: '1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem', textAlign: 'right'}}>Total</th>
                         </tr>
                       </thead>
@@ -298,11 +298,26 @@ export default function AdminDashboard() {
                             <td style={{padding: '1.5rem'}}>{order.userEmail}</td>
                             <td style={{padding: '1.5rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', maxWidth: '250px'}}>
                                 <div>{order.deliveryAddress || 'N/A'}</div>
-                                {order.utr && (
-                                    <div style={{marginTop: '0.5rem', color: 'var(--color-accent)', fontWeight: 'bold'}}>
-                                        UTR: {order.utr}
-                                    </div>
-                                )}
+                                <div style={{marginTop: '0.5rem'}}>
+                                    {order.status === 'pending' ? (
+                                        <div style={{display: 'inline-flex', flexDirection: 'column', gap: '0.3rem'}}>
+                                            <span style={{background: 'rgba(245, 166, 35, 0.2)', color: 'var(--color-accent)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold'}}>
+                                                PENDING VERIFICATION
+                                            </span>
+                                            {order.verificationKey && (
+                                                <span style={{color: '#fff', fontWeight: 'bold', letterSpacing: '0.1em'}}>
+                                                    PIN: {order.verificationKey}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : order.status === 'accepted' ? (
+                                        <span style={{background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold'}}>
+                                            ACCEPTED
+                                        </span>
+                                    ) : (
+                                        order.utr && <span style={{color: 'var(--color-accent)'}}>UTR: {order.utr}</span>
+                                    )}
+                                </div>
                             </td>
                             <td style={{padding: '1.5rem', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem'}}>₹{order.total.toFixed(2)}</td>
                           </tr>

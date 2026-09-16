@@ -83,7 +83,7 @@ export const googleLoginSimulate = (email, name) => {
     return user;
 }
 
-export const saveOrder = (userId, userEmail, items, total, deliveryAddress = null, utr = null) => {
+export const saveOrder = (userId, userEmail, items, total, deliveryAddress = null, utr = null, status = 'pending', verificationKey = null) => {
   initializeDB();
   const orders = JSON.parse(localStorage.getItem('orders'));
   
@@ -95,6 +95,8 @@ export const saveOrder = (userId, userEmail, items, total, deliveryAddress = nul
     total,
     deliveryAddress,
     utr,
+    status,
+    verificationKey,
     date: new Date().toISOString()
   };
 
@@ -105,6 +107,17 @@ export const saveOrder = (userId, userEmail, items, total, deliveryAddress = nul
   window.dispatchEvent(new CustomEvent('newOrderPlaced', { detail: newOrder }));
   
   return newOrder;
+};
+
+export const updateOrderStatus = (orderId, status) => {
+  initializeDB();
+  const orders = JSON.parse(localStorage.getItem('orders'));
+  const orderIndex = orders.findIndex(o => o.id === orderId);
+  if (orderIndex > -1) {
+    orders[orderIndex].status = status;
+    localStorage.setItem('orders', JSON.stringify(orders));
+    window.dispatchEvent(new CustomEvent('newOrderPlaced'));
+  }
 };
 
 export const getUserOrders = (userId) => {
