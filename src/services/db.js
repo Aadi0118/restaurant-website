@@ -1,5 +1,7 @@
 // db.js - Mock database using localStorage
 
+const API_BASE = 'https://restaurant-website-8vnp.onrender.com/api';
+
 const initializeDB = () => {
   let users = JSON.parse(localStorage.getItem('users') || 'null');
   if (!users) {
@@ -104,13 +106,13 @@ export const updateOrderStatus = async (orderId, status) => {
 };
 
 export const getUserOrders = async (userId) => {
-  const response = await fetch(`${API_BASE}/orders/user/${userId}`);
+  const response = await fetch(`${API_BASE}/orders/user/${userId}?t=${Date.now()}`, { cache: 'no-store' });
   if (!response.ok) throw new Error('Failed to fetch user orders');
   return await response.json();
 };
 
 export const getAllOrders = async () => {
-  const response = await fetch(`${API_BASE}/orders`);
+  const response = await fetch(`${API_BASE}/orders?t=${Date.now()}`, { cache: 'no-store' });
   if (!response.ok) throw new Error('Failed to fetch orders');
   return await response.json();
 };
