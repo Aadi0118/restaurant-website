@@ -96,9 +96,8 @@
 
 .menu-item-action {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .btn-sm {
