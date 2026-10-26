@@ -277,7 +277,7 @@ export const ScrollStorySection: React.FC<ScrollStorySectionProps> = ({
           &copy; 2026 Shree Restaurant. All rights reserved.
         </p>
         <p style={{ margin: 0, fontSize: '0.75rem', color: '#6A655E' }}>
-          Elevated Plant-Based Gastronomie • Three.js & WebGL Architecture
+          Pure Vegetarian North Indian Kitchen • Rishikesh, Uttarakhand
         </p>
       </footer>
     </div>
