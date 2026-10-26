@@ -34,11 +34,13 @@ import {
   Truck,
   Users,
   Sparkles,
-  FileText
+  FileText,
+  Globe,
+  Home
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ onNavigateHome }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'reservations' | 'menu'
   const [orders, setOrders] = useState([]);
   const [reservations, setReservations] = useState([]);
@@ -298,11 +300,37 @@ export default function AdminDashboard() {
       
       {/* TOP CONTROL CENTER HEADER & TAB NAVIGATION */}
       <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '2rem'}}>
-         <div style={{display: 'flex', alignItems: 'baseline', gap: '1rem'}}>
-             <h2 style={{margin: 0, fontFamily: 'var(--font-serif)', fontSize: '2rem', color: '#F7F5F0'}}>Admin Control Center</h2>
-             <span style={{color: 'var(--color-accent)', fontSize: '0.8rem', background: 'rgba(201, 168, 107, 0.15)', padding: '0.2rem 0.6rem', borderRadius: '4px', border: '1px solid rgba(201,168,107,0.3)'}}>
-                 Live Sync Active
-             </span>
+         <div style={{display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'}}>
+             <div style={{display: 'flex', alignItems: 'baseline', gap: '0.8rem'}}>
+                 <h2 style={{margin: 0, fontFamily: 'var(--font-serif)', fontSize: '2rem', color: '#F7F5F0'}}>Admin Control Center</h2>
+                 <span style={{color: 'var(--color-accent)', fontSize: '0.8rem', background: 'rgba(201, 168, 107, 0.15)', padding: '0.2rem 0.6rem', borderRadius: '4px', border: '1px solid rgba(201,168,107,0.3)'}}>
+                     Live Sync Active
+                 </span>
+             </div>
+             {onNavigateHome && (
+                 <button
+                   onClick={onNavigateHome}
+                   style={{
+                     display: 'inline-flex',
+                     alignItems: 'center',
+                     gap: '6px',
+                     padding: '0.45rem 0.9rem',
+                     borderRadius: '8px',
+                     cursor: 'pointer',
+                     background: 'rgba(255,255,255,0.05)',
+                     border: '1px solid rgba(201, 168, 107, 0.3)',
+                     color: '#DEC085',
+                     fontSize: '0.85rem',
+                     fontWeight: 600,
+                     transition: 'all 0.2s'
+                   }}
+                   onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(201, 168, 107, 0.15)'}
+                   onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                   title="Browse customer homepage while remaining logged in as Admin"
+                 >
+                   <Globe size={15} /> View Customer Website
+                 </button>
+             )}
          </div>
          
          <div style={{display: 'flex', gap: '0.5rem', background: 'rgba(0,0,0,0.4)', padding: '0.4rem', borderRadius: '10px', border: '1px solid rgba(201, 168, 107, 0.2)'}}>
@@ -316,7 +344,7 @@ export default function AdminDashboard() {
                     fontWeight: activeTab === 'overview' ? 700 : 500,
                     transition: 'all 0.2s', border: 'none'
                 }}>
-                <LayoutDashboard size={18} /> Orders ({orders.length})
+                <LayoutDashboard size={18} /> Dashboard & Orders ({orders.length})
             </button>
             <button 
                 onClick={() => setActiveTab('reservations')}

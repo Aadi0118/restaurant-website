@@ -11,7 +11,7 @@ import AdminDashboard from './components/AdminDashboard'
 import PaymentCallback from './components/PaymentCallback'
 import { getMenuItems, saveOrder } from './services/db'
 import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
-import { Menu, X, ArrowLeft } from 'lucide-react';
+import { Menu, X, ArrowLeft, LayoutDashboard, Globe } from 'lucide-react';
 import { CinematicHomepage } from './components/CinematicHomepage';
 
 
@@ -23,6 +23,7 @@ function App() {
   const [lastOrderDetails, setLastOrderDetails] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [homeSelectedCategory, setHomeSelectedCategory] = useState(null);
+
   
   const taglines = [
     { title: "Experience Culinary Excellence", subtitle: "Where tradition meets modern gastronomy." },
@@ -188,10 +189,50 @@ function App() {
           {user && user.role !== 'admin' && (
             <li><a href="#" onClick={(e) => { e.preventDefault(); navigateWithTransition(() => setCurrentView('history')); }}>Past Orders</a></li>
           )}
+          {user?.role === 'admin' && (
+            <li>
+              <a 
+                href="#" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  navigateWithTransition(() => setCurrentView('admin')); 
+                }}
+                style={{
+                  color: currentView === 'admin' ? 'var(--color-accent)' : '#DEC085',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <LayoutDashboard size={15} /> Dashboard
+              </a>
+            </li>
+          )}
         </ul>
         <div className="nav-actions">
           {user ? (
             <>
+              {user.role === 'admin' && (
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => navigateWithTransition(() => setCurrentView('admin'))} 
+                  style={{ 
+                    marginRight: '0.8rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '0.6rem 1.2rem',
+                    fontWeight: 700,
+                    background: currentView === 'admin' ? 'linear-gradient(135deg, #C9A86B, #DEC085)' : 'rgba(201, 168, 107, 0.2)',
+                    border: '1px solid #C9A86B',
+                    color: currentView === 'admin' ? '#0A0D0B' : '#DEC085',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <LayoutDashboard size={16} /> Admin Dashboard
+                </button>
+              )}
               {user.role !== 'admin' && (
                 <button className="btn btn-secondary" onClick={() => navigateWithTransition(() => setCurrentView('cart'))} style={{ marginRight: '1rem' }}>
                   Cart ({cartItemCount})
@@ -205,6 +246,47 @@ function App() {
           )}
         </div>
       </nav>
+
+      {/* FLOATING QUICK RETURN FOR ADMIN WHEN BROWSING THE CUSTOMER SITE */}
+      {user?.role === 'admin' && currentView !== 'admin' && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '10px 16px',
+          background: '#121814',
+          border: '2px solid #C9A86B',
+          borderRadius: '50px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 25px rgba(201, 168, 107, 0.4)'
+        }}>
+          <span style={{ fontSize: '0.8rem', color: '#B2ADA3', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }}></span>
+            Admin Active
+          </span>
+          <button
+            onClick={() => navigateWithTransition(() => setCurrentView('admin'))}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'linear-gradient(135deg, #C9A86B, #DEC085)',
+              color: '#0A0D0B',
+              border: 'none',
+              padding: '7px 14px',
+              borderRadius: '30px',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              cursor: 'pointer'
+            }}
+          >
+            <LayoutDashboard size={15} /> Return to Dashboard
+          </button>
+        </div>
+      )}
 
       <main className="main-content" style={currentView !== 'home' ? { paddingTop: '120px', minHeight: '100vh' } : {}}>
         {currentView === 'home' && (
@@ -226,7 +308,8 @@ function App() {
             onContinue={() => navigateWithTransition(() => setCurrentView('history'))} 
           />
         )}
-        {currentView === 'admin' && <AdminDashboard />}
+        {currentView === 'admin' && <AdminDashboard onNavigateHome={() => navigateWithTransition(() => setCurrentView('home'))} />}
+
         {currentView === 'payment-callback' && (
           <PaymentCallback 
             user={user} 
