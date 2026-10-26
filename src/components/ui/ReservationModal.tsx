@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Users, Sparkles, CheckCircle2, X, UtensilsCrossed, Wine, Award } from 'lucide-react';
+import { Calendar, Clock, Users, Sparkles, CheckCircle2, X, UtensilsCrossed, Wine, Award, MessageCircle } from 'lucide-react';
 import { ReservationData } from '../../types/dining';
+import { saveReservation } from '../../services/db';
 
 const DINING_EXPERIENCES = [
   { id: 'casual', label: 'Casual Family Dining', icon: Users },
@@ -22,6 +23,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [step, setStep] = useState<'form' | 'confirmed'>('form');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ReservationData>({
     name: '',
     phone: '',
@@ -82,11 +84,24 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     setTimeout(() => setStep('form'), 300);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const code = 'AMB-' + Math.floor(1000 + Math.random() * 9000);
     setConfirmationCode(code);
-    setStep('confirmed');
+
+    try {
+      await saveReservation({
+        ...formData,
+        code,
+        status: 'confirmed'
+      });
+    } catch (err) {
+      console.error('Error saving reservation:', err);
+    } finally {
+      setIsSubmitting(false);
+      setStep('confirmed');
+    }
   };
 
   return (
@@ -335,6 +350,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               {/* Submit Button */}
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="btn btn-primary"
                 style={{
                   marginTop: '10px',
@@ -342,13 +358,14 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                   width: '100%',
                   fontSize: '0.95rem',
                   letterSpacing: '0.15em',
-                  cursor: 'pointer',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  opacity: isSubmitting ? 0.7 : 1,
                   background: 'linear-gradient(135deg, #C9A86B, #DEC085)',
                   color: '#0A0D0B',
                   fontWeight: 700
                 }}
               >
-                Confirm Table Reservation
+                {isSubmitting ? 'Confirming Table...' : 'Confirm Table Reservation'}
               </button>
             </form>
           </div>
@@ -410,15 +427,58 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                   {DINING_EXPERIENCES.find((e) => e.id === formData.experience)?.label || formData.experience}
                 </span>
               </div>
+              {formData.phone && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#B2ADA3' }}>Phone</span>
+                  <span style={{ color: '#F7F5F0' }}>{formData.phone}</span>
+                </div>
+              )}
             </div>
 
-            <button
-              onClick={onClose}
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '12px', cursor: 'pointer', background: 'linear-gradient(135deg, #C9A86B, #DEC085)', color: '#0A0D0B' }}
-            >
-              Return to Experience
-            </button>
+            <div style={{ 
+              marginBottom: '1.5rem', 
+              padding: '0.75rem 1rem', 
+              borderRadius: '10px', 
+              background: 'rgba(201, 168, 107, 0.1)', 
+              border: '1px solid rgba(201, 168, 107, 0.25)',
+              fontSize: '0.85rem',
+              color: '#DEC085'
+            }}>
+              ✓ Dispatched to the Admin Host Desk. Your table is reserved and logged in our system.
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+              <a
+                href={`https://wa.me/919334722318?text=${encodeURIComponent(`Hello Shree Restaurant! I have just reserved a table.\n\nCode: ${confirmationCode}\nName: ${formData.name}\nDate: ${formData.date} at ${formData.time}\nGuests: ${formData.guests}\nExperience: ${formData.experience}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  background: 'rgba(37, 211, 102, 0.15)',
+                  border: '1px solid rgba(37, 211, 102, 0.4)',
+                  color: '#25D366',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.9rem'
+                }}
+              >
+                <MessageCircle size={18} />
+                <span>Send Details to WhatsApp Desk</span>
+              </a>
+
+              <button
+                onClick={onClose}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '12px', cursor: 'pointer', background: 'linear-gradient(135deg, #C9A86B, #DEC085)', color: '#0A0D0B', fontWeight: 600 }}
+              >
+                Return to Experience
+              </button>
+            </div>
           </div>
         )}
 

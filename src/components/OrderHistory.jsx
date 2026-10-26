@@ -35,7 +35,33 @@ export default function OrderHistory({ user }) {
                 </p>
               </div>
               <div style={{textAlign: 'right'}}>
-                <strong style={{color: 'var(--color-accent)'}}>₹{order.total.toFixed(2)}</strong>
+                <strong style={{color: 'var(--color-accent)', fontSize: '1.2rem'}}>₹{order.total.toFixed(2)}</strong>
+                <div style={{marginTop: '4px'}}>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    textTransform: 'uppercase',
+                    background: 
+                      order.status === 'delivered' ? 'rgba(34, 197, 94, 0.2)' :
+                      order.status === 'out_for_delivery' ? 'rgba(168, 85, 247, 0.2)' :
+                      order.status === 'accepted' ? 'rgba(59, 130, 246, 0.2)' :
+                      order.status === 'cancelled' ? 'rgba(239, 68, 68, 0.2)' :
+                      'rgba(245, 158, 11, 0.2)',
+                    color: 
+                      order.status === 'delivered' ? '#4ADE80' :
+                      order.status === 'out_for_delivery' ? '#C084FC' :
+                      order.status === 'accepted' ? '#60A5FA' :
+                      order.status === 'cancelled' ? '#F87171' :
+                      '#FBBF24'
+                  }}>
+                    {order.status === 'accepted' ? 'Cooking in Kitchen' : 
+                     order.status === 'out_for_delivery' ? 'Out For Delivery' :
+                     order.status === 'delivered' ? 'Delivered' :
+                     order.status === 'cancelled' ? 'Cancelled' : 'Pending Verification'}
+                  </span>
+                </div>
               </div>
             </div>
             

@@ -48,6 +48,25 @@ const orderSchema = new mongoose.Schema({
 
 const Order = mongoose.model('Order', orderSchema);
 
+// Reservation Schema
+const reservationSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  code: { type: String, required: true },
+  name: { type: String, required: true },
+  phone: { type: String, required: true },
+  email: { type: String, default: '' },
+  date: { type: String, required: true },
+  time: { type: String, required: true },
+  guests: { type: Number, required: true },
+  experience: { type: String, default: 'casual' },
+  specialRequests: { type: String, default: '' },
+  status: { type: String, default: 'confirmed' }, // 'confirmed' | 'seated' | 'completed' | 'cancelled'
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Reservation = mongoose.model('Reservation', reservationSchema);
+
+
 // --- MENU ITEMS API ---
 app.get('/api/menuItems', async (req, res) => {
   try {
@@ -179,6 +198,75 @@ app.put('/api/orders/:id/status', async (req, res) => {
     res.status(500).json({ error: 'Failed to update order status' });
   }
 });
+
+// --- RESERVATIONS API ---
+app.get('/api/reservations', async (req, res) => {
+  try {
+    const reservations = await Reservation.find({}, '-_id -__v').sort({ createdAt: -1 });
+    res.json(reservations);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch reservations' });
+  }
+});
+
+app.post('/api/reservations', async (req, res) => {
+  try {
+    const { code, name, phone, email, date, time, guests, experience, specialRequests, status } = req.body;
+    const newReservation = new Reservation({
+      id: `res-${Date.now()}`,
+      code: code || ('AMB-' + Math.floor(1000 + Math.random() * 9000)),
+      name,
+      phone,
+      email: email || '',
+      date,
+      time,
+      guests: Number(guests) || 2,
+      experience: experience || 'casual',
+      specialRequests: specialRequests || '',
+      status: status || 'confirmed',
+      createdAt: new Date()
+    });
+    await newReservation.save();
+
+    const formatted = newReservation.toObject();
+    delete formatted._id;
+    delete formatted.__v;
+
+    res.status(201).json(formatted);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create reservation' });
+  }
+});
+
+app.put('/api/reservations/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const updated = await Reservation.findOneAndUpdate(
+      { id },
+      { status },
+      { new: true, select: '-_id -__v' }
+    );
+    if (updated) {
+      res.json(updated);
+    } else {
+      res.status(404).json({ error: 'Reservation not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update reservation status' });
+  }
+});
+
+app.delete('/api/reservations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Reservation.findOneAndDelete({ id });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete reservation' });
+  }
+});
+
 
 // --- PHONEPE V2 CONFIGURATION ---
 // Replace with your real V2 Production credentials when deploying
