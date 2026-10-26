@@ -77,7 +77,7 @@ export default function Cart({ cartItems, onCheckout, user }) {
           Scan the QR code below to pay <strong style={{ color: 'var(--color-accent)' }}>₹{total.toFixed(2)}</strong>.
         </p>
         <div style={{ background: 'white', padding: '1rem', display: 'inline-block', borderRadius: '12px', marginBottom: '2rem' }}>
-          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=Q075209051@ybl&pn=Shree Family Restaurant&am=${total.toFixed(2)}&cu=INR`)}`} alt="Payment QR Code" />
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=Q075209051@ybl&pn=Shree Restaurant&am=${total.toFixed(2)}&cu=INR`)}`} alt="Payment QR Code" />
           <div style={{ marginTop: '0.5rem', color: '#333', fontSize: '0.9rem', fontWeight: 'bold' }}>UPI ID: Q075209051@ybl</div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>

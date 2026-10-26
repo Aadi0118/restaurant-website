@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { flushSync } from 'react-dom'
 import './App.css'
 import './Order.css'
-import heroImg from './assets/hero_bg.jpg'
-import dishImg from './assets/signature_dish.jpg'
 import Login from './components/Login'
 import OrderMenu from './components/OrderMenu'
 import Cart from './components/Cart'
@@ -14,6 +12,7 @@ import PaymentCallback from './components/PaymentCallback'
 import { getMenuItems, saveOrder } from './services/db'
 import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Menu, X, ArrowLeft } from 'lucide-react';
+import { CinematicHomepage } from './components/CinematicHomepage';
 
 
 function App() {
@@ -166,7 +165,10 @@ function App() {
   return (
     <div className="app">
       <nav className="navbar">
-        <div className="logo" onClick={() => navigateWithTransition(() => setCurrentView('home'))} style={{ cursor: 'pointer' }}>Shree Family Restaurant</div>
+        <div className="logo" onClick={() => navigateWithTransition(() => setCurrentView('home'))} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: 'var(--color-accent)', fontWeight: 'bold', letterSpacing: '0.08em' }}>SHREE</span>
+          <span style={{ fontSize: '0.78rem', color: '#b8a8a1', fontWeight: 300, letterSpacing: '0.12em' }}>• RESTAURANT</span>
+        </div>
         
         <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -175,9 +177,9 @@ function App() {
         <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
           {currentView === 'home' && (
             <>
-              <li><a href="#menu" onClick={() => setIsMobileMenuOpen(false)}>Menu</a></li>
-              <li><a href="#about" onClick={() => setIsMobileMenuOpen(false)}>About</a></li>
-              <li><a href="#contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</a></li>
+              <li><a href="#alchemy" onClick={() => setIsMobileMenuOpen(false)}>About Us</a></li>
+              <li><a href="#menu" onClick={() => setIsMobileMenuOpen(false)}>Our Menu</a></li>
+              <li><a href="#location" onClick={() => setIsMobileMenuOpen(false)}>Destination</a></li>
             </>
           )}
           {currentView !== 'home' && user?.role !== 'admin' && (
@@ -199,140 +201,20 @@ function App() {
               <button className="btn btn-primary" onClick={handleLogout}>Logout</button>
             </>
           ) : (
-            <button className="btn btn-primary" onClick={handleStartOrder}>Order Now</button>
+            <button className="btn btn-primary" onClick={handleStartOrder}>Order Online</button>
           )}
         </div>
       </nav>
 
       <main className="main-content" style={currentView !== 'home' ? { paddingTop: '120px', minHeight: '100vh' } : {}}>
         {currentView === 'home' && (
-          <>
-            <section className="hero">
-              <div className="hero-background parallax-layer" style={{ backgroundImage: `url(${heroImg})` }}></div>
-              <div className="hero-overlay"></div>
-              <div className="hero-content">
-                <div className={`tagline-container ${fade}`} style={{ transition: 'opacity 0.5s ease-in-out', opacity: fade === 'fade-in' ? 1 : 0 }}>
-                  <h1>{taglines[taglineIndex].title}</h1>
-                  <p>{taglines[taglineIndex].subtitle}</p>
-                </div>
-                <button className="btn btn-primary" onClick={handleStartOrder} style={{marginTop: '2rem'}}>Order Online</button>
-              </div>
-            </section>
-
-            <section id="menu" className="menu-section">
-              <div className="section-header">
-                <h2>Our Menu</h2>
-                <div className="separator"></div>
-              </div>
-
-              <div className="menu-grid">
-                <div className="menu-items-col">
-                  {homeCategories.length === 0 && <p style={{textAlign: 'center', color: 'var(--color-text-muted)'}}>Loading menu...</p>}
-                  
-                  {!homeSelectedCategory ? (
-                    <div className="categories-list animate-on-scroll" style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                      {homeCategories.map(category => (
-                        <div 
-                          key={category} 
-                          className="category-card"
-                          onClick={() => setHomeSelectedCategory(category)}
-                        >
-                          <h3>{category}</h3>
-                          <span>{groupedHomeMenu[category].length} items</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="category-items animate-on-scroll">
-                      <button 
-                        onClick={() => setHomeSelectedCategory(null)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--color-accent)',
-                          cursor: 'pointer',
-                          padding: '0 0 1.5rem 0',
-                          fontSize: '1rem',
-                          fontWeight: 'bold',
-                          transition: 'color 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
-                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
-                      >
-                        <ArrowLeft size={20} /> Back to Categories
-                      </button>
-                      
-                      <h3 style={{marginBottom: '1.5rem', fontSize: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem'}}>{homeSelectedCategory}</h3>
-                      
-                      <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                        {groupedHomeMenu[homeSelectedCategory].map(item => (
-                          <div key={item.id} className="menu-item">
-                            <div className="menu-item-text">
-                              <h3>{item.name}</h3>
-                              <p>{item.desc}</p>
-                            </div>
-                            <span className="price">₹{Number(item.price).toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="menu-image animate-on-scroll">
-                  <img src={dishImg} alt="Signature Duck Dish" />
-                </div>
-              </div>
-            </section>
-
-            <section id="about" className="about-section" style={{ padding: 'var(--spacing-xxl) var(--spacing-lg)', textAlign: 'center', backgroundColor: 'var(--color-surface-light)' }}>
-              <div className="section-header animate-on-scroll">
-                <h2>Our Story</h2>
-                <div className="separator"></div>
-              </div>
-              <div className="about-content animate-on-scroll" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '3rem' }}>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '1.15rem', marginBottom: '1.5rem', lineHeight: '1.8' }}>
-                  Food is more than just sustenance; it is the universal language of love, memory, and belonging. Shree Family Restaurant was born from a simple belief: that the most profound moments in life happen around a shared table. Rooted in the spiritual warmth of Rishikesh, our kitchen is a tribute to the recipes passed down through generations—crafted not just with spices, but with soul.
-                </p>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '1.15rem', lineHeight: '1.8' }}>
-                  When you dine with us, you aren't just a customer; you become part of our extended family. Every dish we serve is a story of tradition, a celebration of togetherness, and an invitation to pause, connect, and savor the beautiful moments that truly matter. Welcome home.
-                </p>
-              </div>
-            </section>
-
-            <section id="contact" className="contact-section">
-              <div className="contact-container animate-on-scroll" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-                <div className="contact-info" style={{ width: '100%', textAlign: 'center' }}>
-                  <h2>Visit Us</h2>
-                  <div className="separator" style={{ marginBottom: '2rem', marginLeft: 'auto', marginRight: 'auto' }}></div>
-                  <p>Shree Family Restaurant, Near Royal Garden, Seema Dental AIIMS Road, IDPL Colony, Rishikesh</p>
-                  <p>Mon - Sun: 11:00 AM - 11:00 PM</p>
-                  <p>shreecaferishikesh@gmail.com</p>
-                  <p>(+91) 9334722418</p>
-                </div>
-                <div style={{ height: '450px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: 'var(--glass-border)', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3452.8770935013254!2d78.27044287414236!3d30.069057317406685!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39093f7fa59e6a8b%3A0x5aca904c9d08ef46!2sShree%20Family%20Restaurant!5e0!3m2!1sen!2sin!4v1788693043456!5m2!1sen!2sin"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen=""
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade">
-                  </iframe>
-                </div>
-              </div>
-            </section>
-
-            <footer className="footer">
-              <p>&copy;2026 Shree Family Restaurant. All rights reserved.</p>
-              <h6>This site is being maintained by Aditya Kumar Sinha</h6>
-            </footer>
-          </>
+          <CinematicHomepage
+            onAddToCart={handleAddToCart}
+            onNavigateOrder={handleStartOrder}
+            homeMenuItems={homeMenuItems}
+          />
         )}
+
 
         {currentView === 'login' && <Login onLogin={handleLogin} />}
         {currentView === 'order' && <OrderMenu onAddToCart={handleAddToCart} />}

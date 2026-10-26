@@ -2,14 +2,24 @@
   --font-serif: 'Playfair Display', serif;
   --font-sans: 'Outfit', sans-serif;
   
-  --color-bg: #151110;
-  --color-surface: rgba(35, 25, 23, 0.85);
-  --color-surface-light: rgba(50, 35, 30, 0.85);
-  --color-text: #FDFBF7;
-  --color-text-muted: #B8A8A1;
-  --color-accent: #F5A623; /* Saffron Gold */
-  --color-accent-hover: #E09214;
-  --color-accent-alt: #E63946; /* Crimson Red */
+  /* Elevated Botanical Fine-Dining Palette */
+  --color-primary: #173829; /* Nocturnal Imperial Emerald */
+  --color-primary-hover: #214C38; /* Illuminated Malachite */
+  --color-primary-subtle: #0F251B; /* Deep Pine Root */
+  
+  --color-bg: #0A0D0B; /* Obsidian Forest Base */
+  --color-bg-deep: #060807; /* Caviar Black Edge */
+  
+  --color-surface: rgba(18, 24, 20, 0.92); /* Deep Moss Slate (Tier 1) */
+  --color-surface-light: rgba(26, 35, 29, 0.92); /* Gilded Herbarium (Tier 2) */
+  
+  --color-text: #F7F5F0; /* Warm Silk Alabaster (17.2:1 Contrast) */
+  --color-text-muted: #B2ADA3; /* Muted Desert Linen (8.6:1 Contrast) */
+  
+  --color-accent: #C9A86B; /* Brushed Antique Champagne Gold */
+  --color-accent-hover: #DEC085; /* Candlelit Gold Shimmer */
+  --color-accent-press: #9E7E45; /* Burnished Bronze */
+  --color-accent-glow: rgba(201, 168, 107, 0.3);
   
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
@@ -18,7 +28,7 @@
   --spacing-xl: 8rem;
   --spacing-xxl: 12rem;
 
-  --glass-border: 1px solid rgba(245, 166, 35, 0.15);
+  --glass-border: 1px solid rgba(201, 168, 107, 0.2);
 }
 
 *, *::before, *::after {
@@ -56,7 +66,7 @@ a {
 
 a:hover {
   color: var(--color-accent);
-  text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+  text-shadow: 0 0 10px rgba(201, 168, 107, 0.4);
 }
 
 ul {
@@ -91,9 +101,9 @@ button {
 }
 
 .btn:hover {
-  background-color: rgba(245, 166, 35, 0.15);
+  background-color: rgba(201, 168, 107, 0.15);
   color: var(--color-text);
-  box-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
+  box-shadow: 0 0 20px rgba(201, 168, 107, 0.25);
   transform: translateY(-2px);
 }
 
@@ -103,15 +113,16 @@ button {
 
 .btn-primary {
   background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
-  color: var(--color-bg);
+  color: #0A0D0B;
   border: none;
-  box-shadow: 0 4px 15px rgba(245, 166, 35, 0.3);
+  font-weight: 700;
+  box-shadow: 0 4px 18px rgba(201, 168, 107, 0.35);
 }
 
 .btn-primary:hover {
   background: linear-gradient(135deg, var(--color-accent-hover), var(--color-accent));
-  color: var(--color-bg);
-  box-shadow: 0 6px 25px rgba(245, 166, 35, 0.5);
+  color: #0A0D0B;
+  box-shadow: 0 6px 28px rgba(201, 168, 107, 0.55);
   transform: translateY(-2px);
 }
 
@@ -129,6 +140,7 @@ button {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent); 
 }
+
 
 @media (max-width: 768px) {
   :root {

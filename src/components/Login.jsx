@@ -43,7 +43,7 @@ export default function Login({ onLogin }) {
   return (
     <div className="login-container animate-on-load">
       <div className="login-card">
-        <h2>{isRegister ? 'Create Account' : 'Welcome to Shree Family Restaurant'}</h2>
+        <h2>{isRegister ? 'Create Account' : 'Welcome to Shree Restaurant'}</h2>
         <p>{isRegister ? 'Sign up to place an order' : 'Sign in to your account'}</p>
         
         {error && <div className="error-message" style={{color: 'red', marginBottom: '1rem'}}>{error}</div>}
@@ -83,7 +83,7 @@ export default function Login({ onLogin }) {
 
         <div className="auth-footer" style={{marginTop: '2rem'}}>
           <p>
-            {isRegister ? 'Already have an account? ' : 'New to Shree Family Restaurant? '}
+            {isRegister ? 'Already have an account? ' : 'New to Shree Restaurant? '}
             <button className="text-btn" style={{color: 'var(--color-accent)', textDecoration: 'underline'}} onClick={() => setIsRegister(!isRegister)}>
               {isRegister ? 'Sign In' : 'Create Account'}
             </button>

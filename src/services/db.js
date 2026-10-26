@@ -24,10 +24,12 @@ const initializeDB = () => {
   }
   if (!localStorage.getItem('menuItems')) {
     localStorage.setItem('menuItems', JSON.stringify([
-      { id: 'menu-1', name: 'Truffle Risotto', desc: 'Arborio rice, black truffle, aged parmesan, gold leaf.', price: 45, category: 'Main Course' },
-      { id: 'menu-2', name: 'Wagyu A5 Striploin', desc: 'Charred asparagus, bone marrow jus, smoked salt.', price: 120, category: 'Main Course' },
-      { id: 'menu-3', name: 'Lobster Thermidor', desc: 'Cognac cream, gruyere crust, fine herbs.', price: 85, category: 'Main Course' },
-      { id: 'menu-4', name: 'Butter Naan', desc: 'Soft and fluffy Indian bread cooked in a tandoor.', price: 5, category: 'Roti & Tandoor' },
+      { id: 'menu-1', name: 'Paneer Lababdar', desc: 'Rich tomato, butter, and cashew gravy with soft cottage cheese & kasuri methi.', price: 260, category: 'Main Course' },
+      { id: 'menu-2', name: 'Veg Biriyani', desc: 'Slow-steamed aged Basmati rice with fresh garden vegetables & Awadhi spices.', price: 200, category: 'Biryani & Rice' },
+      { id: 'menu-3', name: 'Chole Bhature', desc: 'Amritsari spiced chickpeas with 2 golden crisp, fluffy bhature & pickled onions.', price: 90, category: 'Main Course' },
+      { id: 'menu-4', name: 'Butter Naan', desc: 'Soft and fluffy Indian bread cooked in a tandoor with rich butter.', price: 40, category: 'Roti & Tandoor' },
+      { id: 'menu-5', name: 'Garlic Naan', desc: 'Tandoor-baked flatbread topped with roasted garlic and coriander.', price: 55, category: 'Roti & Tandoor' },
+      { id: 'menu-6', name: 'Dal Makhani', desc: 'Slow-cooked black lentils simmered overnight with butter and fresh cream.', price: 220, category: 'Main Course' }
     ]));
   }
 };

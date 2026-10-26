@@ -14,7 +14,7 @@ export default function UpiGateway({ amount, onSuccess, onCancel }) {
 
   // Generate UPI URI
   const upiId = 'Q075209051@ybl';
-  const payeeName = 'Shree Family Restaurant';
+  const payeeName = 'Shree Restaurant';
   const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&cu=INR`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUri)}`;
 
