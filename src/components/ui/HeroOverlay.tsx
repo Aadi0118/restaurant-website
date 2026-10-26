@@ -126,7 +126,7 @@ export const HeroOverlay: React.FC<HeroOverlayProps> = ({
           }}
         >
           <Award size={15} />
-          <span>Michelin Guide Selection • Rishikesh Hearth</span>
+          <span>Authentic Restaurant • Rishikesh</span>
         </motion.div>
 
         <motion.div

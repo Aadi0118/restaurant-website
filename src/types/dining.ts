@@ -32,7 +32,7 @@ export interface ReservationData {
   date: string;
   time: string;
   guests: number;
-  seating: 'main' | 'hearth' | 'terrace' | 'cellar';
-  experience: 'tasting' | 'alacarte' | 'pairing';
+  seating?: string;
+  experience: string;
   specialRequests?: string;
 }

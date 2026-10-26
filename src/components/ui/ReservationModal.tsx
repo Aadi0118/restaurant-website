@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Users, Sparkles, CheckCircle2, X, UtensilsCrossed, Wine } from 'lucide-react';
+import { Calendar, Clock, Users, Sparkles, CheckCircle2, X, UtensilsCrossed, Wine, Award } from 'lucide-react';
 import { ReservationData } from '../../types/dining';
+
+const DINING_EXPERIENCES = [
+  { id: 'casual', label: 'Casual Family Dining', icon: Users },
+  { id: 'festive', label: 'Festive Gathering', icon: Sparkles },
+  { id: 'executive', label: 'Executive Lunch/Dinner', icon: Award }
+];
+
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -22,8 +29,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     date: new Date().toISOString().split('T')[0],
     time: '19:30',
     guests: 2,
-    seating: 'hearth',
-    experience: 'tasting',
+    experience: 'casual',
     specialRequests: ''
   });
   const [confirmationCode, setConfirmationCode] = useState<string>('');
@@ -144,7 +150,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                 }}
               >
                 <Sparkles size={14} />
-                <span>Elevated Botanical Reservation</span>
+                <span>Table Reservation • Shree Restaurant</span>
               </div>
               <h2
                 id="reservation-title"
@@ -169,15 +175,11 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                   Dining Experience
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                  {[
-                    { id: 'tasting', label: "Botanical Tasting", icon: UtensilsCrossed },
-                    { id: 'alacarte', label: 'Hearth Woodfire', icon: Sparkles },
-                    { id: 'pairing', label: 'Cellar Pairing', icon: Wine }
-                  ].map((exp) => (
+                  {DINING_EXPERIENCES.map((exp) => (
                     <button
                       type="button"
                       key={exp.id}
-                      onClick={() => setFormData({ ...formData, experience: exp.id as any })}
+                      onClick={() => setFormData({ ...formData, experience: exp.id })}
                       style={{
                         padding: '10px 8px',
                         borderRadius: '12px',
@@ -237,10 +239,11 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                       fontSize: '0.9rem'
                     }}
                   >
-                    <option value="18:30">6:30 PM (Golden Hour)</option>
-                    <option value="19:30">7:30 PM (Prime Hearth)</option>
-                    <option value="20:30">8:30 PM (Candlelight)</option>
-                    <option value="21:30">9:30 PM (Late Ember)</option>
+                    <option value="12:30">12:30 PM (Lunch)</option>
+                    <option value="13:30">1:30 PM (Lunch)</option>
+                    <option value="19:30">7:30 PM (Dinner)</option>
+                    <option value="20:30">8:30 PM (Dinner)</option>
+                    <option value="21:30">9:30 PM (Late Dinner)</option>
                   </select>
                 </div>
 
@@ -266,34 +269,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                 </div>
               </div>
 
-              {/* Seating Preference */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: '#B2ADA3', marginBottom: '6px' }}>Seating Zone</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                  {[
-                    { id: 'hearth', label: "Chef's Hearth Counter" },
-                    { id: 'main', label: 'Main Botanical Salon' },
-                    { id: 'terrace', label: 'Star Terrace' }
-                  ].map((seat) => (
-                    <button
-                      type="button"
-                      key={seat.id}
-                      onClick={() => setFormData({ ...formData, seating: seat.id as any })}
-                      style={{
-                        padding: '8px',
-                        borderRadius: '8px',
-                        border: formData.seating === seat.id ? '1px solid #C9A86B' : '1px solid rgba(255,255,255,0.08)',
-                        background: formData.seating === seat.id ? 'rgba(23, 56, 41, 0.65)' : 'rgba(255,255,255,0.02)',
-                        color: formData.seating === seat.id ? '#DEC085' : '#B2ADA3',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {seat.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+
 
               {/* Guest Contact Details */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -302,7 +278,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="Lady / Lord Sterling"
+                    placeholder="e.g. Rahul Sharma"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     style={{
@@ -321,7 +297,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                   <input
                     type="tel"
                     required
-                    placeholder="+91 93347 22418"
+                    placeholder="+91 93347 22318"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     style={{
@@ -429,8 +405,10 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                 <span style={{ color: '#F7F5F0' }}>{formData.date} at {formData.time}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#B2ADA3' }}>Zone & Experience</span>
-                <span style={{ color: '#F7F5F0', textTransform: 'capitalize' }}>{formData.seating} • {formData.experience}</span>
+                <span style={{ color: '#B2ADA3' }}>Experience</span>
+                <span style={{ color: '#F7F5F0' }}>
+                  {DINING_EXPERIENCES.find((e) => e.id === formData.experience)?.label || formData.experience}
+                </span>
               </div>
             </div>
 

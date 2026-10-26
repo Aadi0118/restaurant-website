@@ -177,13 +177,13 @@ export const ScrollStorySection: React.FC<ScrollStorySectionProps> = ({
           {/* Left Details */}
           <div>
             <div style={{ fontSize: '0.78rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#C9A86B', marginBottom: '8px' }}>
-              The Sanctuary
+              Find Us In Rishikesh
             </div>
             <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(2.2rem, 4vw, 3.5rem)', margin: '0 0 1.5rem 0', fontWeight: 400, color: '#F7F5F0' }}>
-              Visit Our Botanical Salon
+              Visit Shree Restaurant
             </h2>
             <p style={{ color: '#B2ADA3', fontSize: '1rem', lineHeight: '1.7', marginBottom: '2rem' }}>
-              Nestled along the serene foothills of Rishikesh, our dining salon pairs ancient riverside tranquility with Michelin-caliber elevated vegetarian gastronomy.
+              Located right by Laxman Jhoola next to Hemkund Sahib Gurdwara in Rishikesh, welcoming you and your family with warm hospitality, authentic spices, and comfort dining.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginBottom: '2.5rem' }}>
@@ -193,7 +193,7 @@ export const ScrollStorySection: React.FC<ScrollStorySectionProps> = ({
                 </div>
                 <div>
                   <div style={{ fontSize: '0.8rem', color: '#B2ADA3' }}>Location</div>
-                  <div style={{ color: '#F7F5F0', fontSize: '0.95rem' }}>Near Royal Garden, Seema Dental AIIMS Road, IDPL Colony, Rishikesh</div>
+                  <div style={{ color: '#F7F5F0', fontSize: '0.95rem' }}>Shree Restaurant, 581, Laxman Jhoola, next to Hemkund Sahib Gurdwara, Adarsh Gram, Rishikesh, Uttarakhand 249201</div>
                 </div>
               </div>
 
@@ -213,7 +213,7 @@ export const ScrollStorySection: React.FC<ScrollStorySectionProps> = ({
                 </div>
                 <div>
                   <div style={{ fontSize: '0.8rem', color: '#B2ADA3' }}>Concierge & Enquiries</div>
-                  <div style={{ color: '#F7F5F0', fontSize: '0.95rem' }}>(+91) 93347 22418 • shreecaferishikesh@gmail.com</div>
+                  <div style={{ color: '#F7F5F0', fontSize: '0.95rem' }}>(+91) 93347 22318 • shreecaferishikesh@gmail.com</div>
                 </div>
               </div>
             </div>
@@ -249,14 +249,14 @@ export const ScrollStorySection: React.FC<ScrollStorySectionProps> = ({
             }}
           >
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3452.8770935013254!2d78.27044287414236!3d30.069057317406685!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39093f7fa59e6a8b%3A0x5aca904c9d08ef46!2sShree%20Family%20Restaurant!5e0!3m2!1sen!2sin!4v1788693043456!5m2!1sen!2sin"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3451.369030864356!2d78.29866597387822!3d30.112252059878173!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3909177f3c3b7309%3A0x92fe6fe5f6e3001d!2sShree%20Restaurant!5e0!3m2!1sen!2sin!4v1793009190456!5m2!1sen!2sin"
               width="100%"
               height="100%"
               style={{ border: 0, filter: 'contrast(1.05) brightness(0.95)' }}
               allowFullScreen={true}
               loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Restaurant Location Map"
+              referrerPolicy="strict-origin-when-cross-origin"
+              title="Shree Restaurant Location Map"
             />
           </div>
         </div>
