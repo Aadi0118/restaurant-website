@@ -357,6 +357,7 @@ export const addMenuItem = async (name, desc, price, category = 'Uncategorized')
   const localItems = JSON.parse(localStorage.getItem('menuItems') || '[]');
   localItems.push(newItem);
   localStorage.setItem('menuItems', JSON.stringify(localItems));
+  window.dispatchEvent(new Event('menu-updated'));
 
   try {
     const response = await fetch(`${API_BASE}/menuItems`, {
@@ -377,6 +378,7 @@ export const updateMenuItem = async (id, name, desc, price, category = 'Uncatego
   const localItems = JSON.parse(localStorage.getItem('menuItems') || '[]');
   const updatedItems = localItems.map(item => item.id === id ? { ...item, name, desc, price: Number(price), category } : item);
   localStorage.setItem('menuItems', JSON.stringify(updatedItems));
+  window.dispatchEvent(new Event('menu-updated'));
 
   try {
     const response = await fetch(`${API_BASE}/menuItems/${id}`, {
@@ -397,6 +399,7 @@ export const deleteMenuItem = async (id) => {
   const localItems = JSON.parse(localStorage.getItem('menuItems') || '[]');
   const filtered = localItems.filter(item => item.id !== id);
   localStorage.setItem('menuItems', JSON.stringify(filtered));
+  window.dispatchEvent(new Event('menu-updated'));
 
   try {
     await fetch(`${API_BASE}/menuItems/${id}`, { method: 'DELETE' });
@@ -404,3 +407,178 @@ export const deleteMenuItem = async (id) => {
     console.warn('API deleteMenuItem fallback to local storage:', err.message);
   }
 };
+
+// --- BATCH MENU ITEMS OPERATIONS ---
+export const batchSaveMenuItems = async ({ creates = [], updates = [], deletes = [] }) => {
+  initializeDB();
+  const localItems = JSON.parse(localStorage.getItem('menuItems') || '[]');
+  
+  // 1. Process deletions
+  const deleteSet = new Set(deletes);
+  let workingItems = localItems.filter(item => !deleteSet.has(item.id));
+
+  // 2. Process updates
+  const updateMap = new Map(updates.map(u => [u.id, u]));
+  workingItems = workingItems.map(item => {
+    if (updateMap.has(item.id)) {
+      const u = updateMap.get(item.id);
+      return {
+        ...item,
+        name: u.name.trim(),
+        desc: (u.desc || '').trim(),
+        price: Number(u.price) || 0,
+        category: (u.category || 'Uncategorized').trim()
+      };
+    }
+    return item;
+  });
+
+  // 3. Process creations
+  const now = Date.now();
+  const newCreatedItems = creates.map((c, index) => ({
+    id: c.id || `menu-${now}-${index}`,
+    name: c.name.trim(),
+    desc: (c.desc || '').trim(),
+    price: Number(c.price) || 0,
+    category: (c.category || 'Uncategorized').trim()
+  }));
+
+  const finalItems = [...workingItems, ...newCreatedItems];
+  localStorage.setItem('menuItems', JSON.stringify(finalItems));
+  window.dispatchEvent(new Event('menu-updated'));
+
+  // Attempt backend API sync
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const response = await fetch(`${API_BASE}/menuItems/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ creates: newCreatedItems, updates, deletes }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.items && Array.isArray(data.items)) {
+        localStorage.setItem('menuItems', JSON.stringify(data.items));
+        return {
+          success: true,
+          count: { created: newCreatedItems.length, updated: updates.length, deleted: deletes.length },
+          items: data.items
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('API batchSaveMenuItems fallback to local storage:', err.message);
+  }
+
+  return {
+    success: true,
+    count: { created: newCreatedItems.length, updated: updates.length, deleted: deletes.length },
+    items: finalItems
+  };
+};
+
+// --- BATCH ORDERS OPERATIONS ---
+export const batchUpdateOrderStatus = async (orderIds, status) => {
+  initializeDB();
+  const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+  const idSet = new Set(orderIds);
+  const updatedOrders = localOrders.map(o => idSet.has(o.id) ? { ...o, status } : o);
+  localStorage.setItem('orders', JSON.stringify(updatedOrders));
+  window.dispatchEvent(new Event('order-updated'));
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    await fetch(`${API_BASE}/orders/batch-status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: orderIds, status }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+  } catch (err) {
+    console.warn('API batchUpdateOrderStatus fallback to local storage:', err.message);
+  }
+
+  return updatedOrders;
+};
+
+export const batchDeleteOrders = async (orderIds) => {
+  initializeDB();
+  const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+  const idSet = new Set(orderIds);
+  const filtered = localOrders.filter(o => !idSet.has(o.id));
+  localStorage.setItem('orders', JSON.stringify(filtered));
+  window.dispatchEvent(new Event('order-updated'));
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    await fetch(`${API_BASE}/orders/batch`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: orderIds }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+  } catch (err) {
+    console.warn('API batchDeleteOrders fallback to local storage:', err.message);
+  }
+
+  return filtered;
+};
+
+// --- BATCH RESERVATIONS OPERATIONS ---
+export const batchUpdateReservationStatus = async (resIds, status) => {
+  initializeDB();
+  const localReservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+  const idSet = new Set(resIds);
+  const updated = localReservations.map(r => idSet.has(r.id) ? { ...r, status } : r);
+  localStorage.setItem('reservations', JSON.stringify(updated));
+  window.dispatchEvent(new Event('reservation-updated'));
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    await fetch(`${API_BASE}/reservations/batch-status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: resIds, status }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+  } catch (err) {
+    console.warn('API batchUpdateReservationStatus fallback to local storage:', err.message);
+  }
+
+  return updated;
+};
+
+export const batchDeleteReservations = async (resIds) => {
+  initializeDB();
+  const localReservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+  const idSet = new Set(resIds);
+  const filtered = localReservations.filter(r => !idSet.has(r.id));
+  localStorage.setItem('reservations', JSON.stringify(filtered));
+  window.dispatchEvent(new Event('reservation-updated'));
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    await fetch(`${API_BASE}/reservations/batch`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: resIds }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+  } catch (err) {
+    console.warn('API batchDeleteReservations fallback to local storage:', err.message);
+  }
+
+  return filtered;
+};
+

@@ -131,6 +131,52 @@ app.delete('/api/menuItems/:id', async (req, res) => {
   }
 });
 
+app.post('/api/menuItems/batch', async (req, res) => {
+  try {
+    const { creates = [], updates = [], deletes = [] } = req.body;
+    
+    // Process deletes
+    if (Array.isArray(deletes) && deletes.length > 0) {
+      await MenuItem.deleteMany({ id: { $in: deletes } });
+    }
+    
+    // Process updates
+    if (Array.isArray(updates) && updates.length > 0) {
+      for (const item of updates) {
+        if (item.id) {
+          await MenuItem.findOneAndUpdate(
+            { id: item.id },
+            { 
+              name: item.name, 
+              desc: item.desc, 
+              price: Number(item.price), 
+              category: item.category || 'Uncategorized' 
+            }
+          );
+        }
+      }
+    }
+    
+    // Process creates
+    if (Array.isArray(creates) && creates.length > 0) {
+      const newDocs = creates.map((item, idx) => ({
+        id: item.id || `menu-${Date.now()}-${idx}`,
+        name: item.name,
+        desc: item.desc || '',
+        price: Number(item.price) || 0,
+        category: item.category || 'Uncategorized'
+      }));
+      await MenuItem.insertMany(newDocs);
+    }
+    
+    const allItems = await MenuItem.find({}, '-_id -__v');
+    res.json({ success: true, count: { created: creates.length, updated: updates.length, deleted: deletes.length }, items: allItems });
+  } catch (error) {
+    console.error('Batch menu items error:', error);
+    res.status(500).json({ error: 'Failed to process batch menu operations' });
+  }
+});
+
 // --- ORDERS API ---
 app.get('/api/orders', async (req, res) => {
   try {
@@ -199,6 +245,30 @@ app.put('/api/orders/:id/status', async (req, res) => {
   }
 });
 
+app.put('/api/orders/batch-status', async (req, res) => {
+  try {
+    const { ids = [], status } = req.body;
+    if (Array.isArray(ids) && ids.length > 0 && status) {
+      await Order.updateMany({ id: { $in: ids } }, { status });
+    }
+    res.json({ success: true, count: ids.length, status });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to batch update orders' });
+  }
+});
+
+app.delete('/api/orders/batch', async (req, res) => {
+  try {
+    const { ids = [] } = req.body;
+    if (Array.isArray(ids) && ids.length > 0) {
+      await Order.deleteMany({ id: { $in: ids } });
+    }
+    res.json({ success: true, count: ids.length });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to batch delete orders' });
+  }
+});
+
 // --- RESERVATIONS API ---
 app.get('/api/reservations', async (req, res) => {
   try {
@@ -264,6 +334,30 @@ app.delete('/api/reservations/:id', async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete reservation' });
+  }
+});
+
+app.put('/api/reservations/batch-status', async (req, res) => {
+  try {
+    const { ids = [], status } = req.body;
+    if (Array.isArray(ids) && ids.length > 0 && status) {
+      await Reservation.updateMany({ id: { $in: ids } }, { status });
+    }
+    res.json({ success: true, count: ids.length, status });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to batch update reservations' });
+  }
+});
+
+app.delete('/api/reservations/batch', async (req, res) => {
+  try {
+    const { ids = [] } = req.body;
+    if (Array.isArray(ids) && ids.length > 0) {
+      await Reservation.deleteMany({ id: { $in: ids } });
+    }
+    res.json({ success: true, count: ids.length });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to batch delete reservations' });
   }
 });
 

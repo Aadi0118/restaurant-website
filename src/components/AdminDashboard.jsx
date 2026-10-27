@@ -6,10 +6,16 @@ import {
   addMenuItem, 
   updateMenuItem, 
   deleteMenuItem,
+  batchSaveMenuItems,
+  batchUpdateOrderStatus,
+  batchDeleteOrders,
   getAllReservations,
   updateReservationStatus,
-  deleteReservation
+  deleteReservation,
+  batchUpdateReservationStatus,
+  batchDeleteReservations
 } from '../services/db';
+import BatchMenuEditor from './BatchMenuEditor';
 import { 
   TrendingUp, 
   ShoppingBag, 
@@ -21,22 +27,14 @@ import {
   Trash2, 
   Plus, 
   X, 
-  ChevronDown, 
   Search,
   Calendar,
   Phone,
-  Mail,
-  CheckCircle2,
-  AlertCircle,
   MessageCircle,
-  Printer,
-  Eye,
-  Truck,
   Users,
   Sparkles,
   FileText,
-  Globe,
-  Home
+  Globe
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -58,6 +56,11 @@ export default function AdminDashboard({ onNavigateHome }) {
   const [formData, setFormData] = useState({ name: '', desc: '', price: '', category: '' });
   const [isAdding, setIsAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Batch Operations State
+  const [menuMode, setMenuMode] = useState('batch'); // 'batch' (default) | 'standard'
+  const [selectedOrderIds, setSelectedOrderIds] = useState(new Set());
+  const [selectedResIds, setSelectedResIds] = useState(new Set());
 
   // Alarm & Notification State
   const [isAlarmRinging, setIsAlarmRinging] = useState(false);
@@ -169,7 +172,7 @@ export default function AdminDashboard({ onNavigateHome }) {
   // Order status updater
   const handleOrderStatusChange = async (orderId, newStatus) => {
     try {
-      const updated = await updateOrderStatus(orderId, newStatus);
+      await updateOrderStatus(orderId, newStatus);
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder(prev => ({ ...prev, status: newStatus }));
@@ -199,6 +202,107 @@ export default function AdminDashboard({ onNavigateHome }) {
       } catch (err) {
         console.error(err);
       }
+    }
+  };
+
+  // --- BATCH CRUD & BULK OPERATIONS HANDLERS ---
+  const handleBatchSaveMenu = async ({ creates, updates, deletes }) => {
+    const result = await batchSaveMenuItems({ creates, updates, deletes });
+    if (result && result.items) {
+      setMenuItems(result.items);
+    } else {
+      const refreshed = await getMenuItems();
+      setMenuItems(refreshed);
+    }
+  };
+
+  // Orders Batch Operations
+  const handleToggleSelectOrder = (id) => {
+    setSelectedOrderIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAllOrders = (selectAll) => {
+    if (selectAll) {
+      setSelectedOrderIds(new Set(orders.map(o => o.id)));
+    } else {
+      setSelectedOrderIds(new Set());
+    }
+  };
+
+  const handleBatchOrderChangeStatus = async (status) => {
+    if (selectedOrderIds.size === 0) return;
+    const ids = Array.from(selectedOrderIds);
+    try {
+      await batchUpdateOrderStatus(ids, status);
+      setOrders(prev => prev.map(o => selectedOrderIds.has(o.id) ? { ...o, status } : o));
+      setSelectedOrderIds(new Set());
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update orders in batch');
+    }
+  };
+
+  const handleBatchDeleteOrders = async () => {
+    if (selectedOrderIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedOrderIds.size} selected orders?`)) return;
+    const ids = Array.from(selectedOrderIds);
+    try {
+      await batchDeleteOrders(ids);
+      setOrders(prev => prev.filter(o => !selectedOrderIds.has(o.id)));
+      setSelectedOrderIds(new Set());
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete orders in batch');
+    }
+  };
+
+  // Reservations Batch Operations
+  const handleToggleSelectRes = (id) => {
+    setSelectedResIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAllRes = (selectAll) => {
+    if (selectAll) {
+      setSelectedResIds(new Set(filteredReservations.map(r => r.id)));
+    } else {
+      setSelectedResIds(new Set());
+    }
+  };
+
+  const handleBatchResChangeStatus = async (status) => {
+    if (selectedResIds.size === 0) return;
+    const ids = Array.from(selectedResIds);
+    try {
+      await batchUpdateReservationStatus(ids, status);
+      setReservations(prev => prev.map(r => selectedResIds.has(r.id) ? { ...r, status } : r));
+      setSelectedResIds(new Set());
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update reservations in batch');
+    }
+  };
+
+  const handleBatchDeleteRes = async () => {
+    if (selectedResIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedResIds.size} selected table reservations?`)) return;
+    const ids = Array.from(selectedResIds);
+    try {
+      await batchDeleteReservations(ids);
+      setReservations(prev => prev.filter(r => !selectedResIds.has(r.id)));
+      setSelectedResIds(new Set());
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete reservations in batch');
     }
   };
 
@@ -447,14 +551,53 @@ export default function AdminDashboard({ onNavigateHome }) {
           </div>
           
           {/* Recent Orders Table with Food Items! */}
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.8rem'}}>
             <h3 style={{margin: 0, fontSize: '1.3rem', color: '#F7F5F0'}}>
               Food Orders & Kitchen Operations
             </h3>
-            <span style={{fontSize: '0.85rem', color: 'var(--color-text-muted)'}}>
-              Showing {orders.length} total orders
-            </span>
+            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+              <span style={{fontSize: '0.85rem', color: 'var(--color-text-muted)'}}>
+                Showing {orders.length} total orders
+              </span>
+            </div>
           </div>
+
+          {/* BATCH ORDERS FLOATING ACTION TOOLBAR */}
+          {selectedOrderIds.size > 0 && (
+            <div style={{
+              position: 'sticky',
+              top: '80px',
+              zIndex: 100,
+              marginBottom: '1rem',
+              padding: '0.8rem 1.2rem',
+              background: 'rgba(18, 24, 20, 0.95)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid #C9A86B',
+              borderRadius: '12px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '0.8rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ background: '#C9A86B', color: '#0A0D0B', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>
+                  {selectedOrderIds.size} Orders Selected
+                </span>
+                <span style={{ color: '#F7F5F0', fontSize: '0.85rem' }}>Batch Actions:</span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Set Status:</span>
+                <button onClick={() => handleBatchOrderChangeStatus('accepted')} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.2)', border: '1px solid #3B82F6', color: '#60A5FA', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>Accepted / Cooking</button>
+                <button onClick={() => handleBatchOrderChangeStatus('out_for_delivery')} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.2)', border: '1px solid #A855F7', color: '#C084FC', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>Out For Delivery</button>
+                <button onClick={() => handleBatchOrderChangeStatus('delivered')} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(34, 197, 94, 0.2)', border: '1px solid #22C55E', color: '#4ADE80', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>Delivered</button>
+                <button onClick={() => handleBatchOrderChangeStatus('cancelled')} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#F87171', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>Cancelled</button>
+                <button onClick={handleBatchDeleteOrders} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#F87171', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Trash2 size={13} /> Delete Selected</button>
+                <button onClick={() => handleSelectAllOrders(false)} style={{ padding: '4px 8px', background: 'transparent', border: 'none', color: '#9CA3AF', fontSize: '0.78rem', cursor: 'pointer' }}>Deselect</button>
+              </div>
+            </div>
+          )}
 
           {orders.length === 0 ? (
               <div style={{padding: '3rem', textAlign: 'center', background: 'var(--color-surface-light)', borderRadius: '12px', color: 'var(--color-text-muted)'}}>
@@ -466,6 +609,15 @@ export default function AdminDashboard({ onNavigateHome }) {
                     <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px'}}>
                       <thead>
                         <tr style={{background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.1)'}}>
+                          <th style={{width: '40px', padding: '1.2rem', textAlign: 'center'}}>
+                            <input
+                              type="checkbox"
+                              checked={orders.length > 0 && selectedOrderIds.size === orders.length}
+                              onChange={(e) => handleSelectAllOrders(e.target.checked)}
+                              style={{ cursor: 'pointer', transform: 'scale(1.15)', accentColor: '#C9A86B' }}
+                              title="Select All Orders"
+                            />
+                          </th>
                           <th style={{padding: '1.2rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.85rem'}}>Order ID</th>
                           <th style={{padding: '1.2rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.85rem'}}>Customer & Contact</th>
                           <th style={{padding: '1.2rem', color: 'var(--color-accent)', fontWeight: 700, fontSize: '0.85rem'}}>Food Items Ordered</th>
@@ -480,16 +632,27 @@ export default function AdminDashboard({ onNavigateHome }) {
                           const phone = extractPhone(order.deliveryAddress);
                           const itemsList = Array.isArray(order.items) ? order.items : [];
                           const totalItemQty = itemsList.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+                          const isSelected = selectedOrderIds.has(order.id);
 
                           return (
                             <tr 
                                 key={order.id} 
                                 style={{
                                     borderTop: '1px solid rgba(255,255,255,0.06)',
-                                    background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
+                                    background: isSelected ? 'rgba(201, 168, 107, 0.1)' : (index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)'),
                                     verticalAlign: 'top'
                                 }}
                             >
+                              {/* Checkbox Column */}
+                              <td style={{padding: '1.2rem', textAlign: 'center'}}>
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleToggleSelectOrder(order.id)}
+                                  style={{ cursor: 'pointer', transform: 'scale(1.15)', accentColor: '#C9A86B' }}
+                                />
+                              </td>
+
                               {/* Order ID & Date */}
                               <td style={{padding: '1.2rem'}}>
                                 <div style={{color: 'var(--color-accent)', fontWeight: 'bold', fontSize: '1rem'}}>
@@ -732,6 +895,43 @@ export default function AdminDashboard({ onNavigateHome }) {
             </div>
           </div>
 
+          {/* BATCH RESERVATIONS FLOATING ACTION TOOLBAR */}
+          {selectedResIds.size > 0 && (
+            <div style={{
+              position: 'sticky',
+              top: '80px',
+              zIndex: 100,
+              marginBottom: '1rem',
+              padding: '0.8rem 1.2rem',
+              background: 'rgba(18, 24, 20, 0.95)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid #C9A86B',
+              borderRadius: '12px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '0.8rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ background: '#C9A86B', color: '#0A0D0B', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>
+                  {selectedResIds.size} Bookings Selected
+                </span>
+                <span style={{ color: '#F7F5F0', fontSize: '0.85rem' }}>Batch Actions:</span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Set Status:</span>
+                <button onClick={() => handleBatchResChangeStatus('confirmed')} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(201, 168, 107, 0.2)', border: '1px solid #C9A86B', color: '#DEC085', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>Confirmed</button>
+                <button onClick={() => handleBatchResChangeStatus('seated')} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.2)', border: '1px solid #3B82F6', color: '#60A5FA', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>Seated at Table</button>
+                <button onClick={() => handleBatchResChangeStatus('completed')} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(34, 197, 94, 0.2)', border: '1px solid #22C55E', color: '#4ADE80', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>Dining Completed</button>
+                <button onClick={() => handleBatchResChangeStatus('cancelled')} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#F87171', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>Cancelled</button>
+                <button onClick={handleBatchDeleteRes} style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#F87171', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Trash2 size={13} /> Delete Selected</button>
+                <button onClick={() => handleSelectAllRes(false)} style={{ padding: '4px 8px', background: 'transparent', border: 'none', color: '#9CA3AF', fontSize: '0.78rem', cursor: 'pointer' }}>Deselect</button>
+              </div>
+            </div>
+          )}
+
           {/* Reservations List */}
           {filteredReservations.length === 0 ? (
             <div style={{padding: '3rem', textAlign: 'center', background: 'var(--color-surface-light)', borderRadius: '12px', color: 'var(--color-text-muted)'}}>
@@ -743,6 +943,15 @@ export default function AdminDashboard({ onNavigateHome }) {
                 <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px'}}>
                   <thead>
                     <tr style={{background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.1)'}}>
+                      <th style={{width: '40px', padding: '1.2rem', textAlign: 'center'}}>
+                        <input
+                          type="checkbox"
+                          checked={filteredReservations.length > 0 && selectedResIds.size === filteredReservations.length}
+                          onChange={(e) => handleSelectAllRes(e.target.checked)}
+                          style={{ cursor: 'pointer', transform: 'scale(1.15)', accentColor: '#C9A86B' }}
+                          title="Select All Bookings"
+                        />
+                      </th>
                       <th style={{padding: '1.2rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.85rem'}}>Code</th>
                       <th style={{padding: '1.2rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.85rem'}}>Guest Name & Contact</th>
                       <th style={{padding: '1.2rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.85rem'}}>Date & Time</th>
@@ -753,15 +962,25 @@ export default function AdminDashboard({ onNavigateHome }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredReservations.map((res, index) => (
+                    {filteredReservations.map((res, index) => {
+                      const isSelected = selectedResIds.has(res.id);
+                      return (
                       <tr 
                         key={res.id}
                         style={{
                           borderTop: '1px solid rgba(255,255,255,0.06)',
-                          background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
+                          background: isSelected ? 'rgba(201, 168, 107, 0.1)' : (index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)'),
                           verticalAlign: 'top'
                         }}
                       >
+                        <td style={{padding: '1.2rem', textAlign: 'center'}}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelectRes(res.id)}
+                            style={{ cursor: 'pointer', transform: 'scale(1.15)', accentColor: '#C9A86B' }}
+                          />
+                        </td>
                         <td style={{padding: '1.2rem'}}>
                           <span style={{color: '#DEC085', fontWeight: 'bold', letterSpacing: '0.05em', background: 'rgba(201, 168, 107, 0.1)', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(201, 168, 107, 0.2)'}}>
                             {res.code}
@@ -850,7 +1069,8 @@ export default function AdminDashboard({ onNavigateHome }) {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    );
+                  })}
                   </tbody>
                 </table>
               </div>
@@ -864,106 +1084,177 @@ export default function AdminDashboard({ onNavigateHome }) {
       {/* ======================================================== */}
       {activeTab === 'menu' && (
           <div className="menu-management animate-on-load">
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem'}}>
-                  <h3 style={{margin: 0, color: '#F7F5F0'}}>Manage Restaurant Menu</h3>
-                  {!isAdding && !editingItem && (
-                      <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
-                          <div style={{position: 'relative'}}>
-                              <Search size={18} style={{position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)'}} />
-                              <input 
-                                  type="text" 
-                                  placeholder="Search dish or category..." 
-                                  value={searchQuery}
-                                  onChange={(e) => setSearchQuery(e.target.value)}
-                                  style={{padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: 'var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'var(--color-text)', outline: 'none', width: '250px'}}
-                              />
-                          </div>
-                          <button className="btn btn-primary" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem'}} onClick={handleAddClick}>
-                              <Plus size={18} /> Add New Dish
-                          </button>
-                      </div>
-                  )}
+              {/* Header Mode Switcher: Batch Studio vs Standard List */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h3 style={{ margin: 0, color: '#F7F5F0', fontFamily: 'var(--font-serif)', fontSize: '1.6rem' }}>
+                    Menu Management
+                  </h3>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>
+                    {menuItems.length} Dishes Active
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.4)', padding: '4px', borderRadius: '10px', border: '1px solid rgba(201, 168, 107, 0.25)' }}>
+                  <button
+                    onClick={() => setMenuMode('batch')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      background: menuMode === 'batch' ? 'linear-gradient(135deg, #C9A86B, #DEC085)' : 'transparent',
+                      color: menuMode === 'batch' ? '#0A0D0B' : '#D1D5DB',
+                      boxShadow: menuMode === 'batch' ? '0 2px 10px rgba(201, 168, 107, 0.3)' : 'none',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Sparkles size={15} /> ⚡ Batch CRUD Studio
+                  </button>
+                  <button
+                    onClick={() => setMenuMode('standard')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      background: menuMode === 'standard' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                      color: menuMode === 'standard' ? '#F7F5F0' : 'var(--color-text-muted)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Utensils size={15} /> Single Item Form View
+                  </button>
+                </div>
               </div>
 
-              {(isAdding || editingItem) && (
-                  <form onSubmit={handleSaveMenu} style={{ background: 'var(--color-surface-light)', padding: '2rem', borderRadius: '12px', border: 'var(--glass-border)', marginBottom: '2rem' }}>
-                      <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
-                          <h4>{isAdding ? 'Add New Dish' : 'Edit Dish'}</h4>
-                          <button type="button" onClick={handleCancelEdit} style={{color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer'}}><X size={20}/></button>
-                      </div>
-                      
-                      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
-                          <div>
-                              <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'}}>Dish Name</label>
-                              <input type="text" className="form-input" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Shahi Paneer" />
+              {menuMode === 'batch' ? (
+                <BatchMenuEditor
+                  menuItems={menuItems}
+                  onSaveBatch={handleBatchSaveMenu}
+                  onClose={() => setMenuMode('standard')}
+                  onRefresh={async () => {
+                    const updated = await getMenuItems();
+                    setMenuItems(updated);
+                  }}
+                />
+              ) : (
+                /* Standard single-item form & list */
+                <>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem'}}>
+                      <p style={{margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9rem'}}>
+                        Edit dishes one-by-one or switch to <strong style={{color: 'var(--color-accent)', cursor: 'pointer', textDecoration: 'underline'}} onClick={() => setMenuMode('batch')}>Batch CRUD Studio</strong> to edit everything at once.
+                      </p>
+                      {!isAdding && !editingItem && (
+                          <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
+                              <div style={{position: 'relative'}}>
+                                  <Search size={18} style={{position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)'}} />
+                                  <input 
+                                      type="text" 
+                                      placeholder="Search dish or category..." 
+                                      value={searchQuery}
+                                      onChange={(e) => setSearchQuery(e.target.value)}
+                                      style={{padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: 'var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'var(--color-text)', outline: 'none', width: '250px'}}
+                                  />
+                              </div>
+                              <button className="btn btn-primary" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem'}} onClick={handleAddClick}>
+                                  <Plus size={18} /> Add New Dish
+                              </button>
                           </div>
-                          <div>
-                              <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'}}>Category</label>
-                              <input type="text" className="form-input" required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="e.g. Indian Rasoi" />
-                          </div>
-                          <div>
-                              <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'}}>Price (₹)</label>
-                              <input type="number" step="1" min="0" className="form-input" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="e.g. 240" />
-                          </div>
-                      </div>
-                      <div style={{marginBottom: '2rem'}}>
-                          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'}}>Description</label>
-                          <textarea className="form-input" required value={formData.desc} onChange={e => setFormData({...formData, desc: e.target.value})} placeholder="Detailed description of spices, ingredients..." rows={3}></textarea>
-                      </div>
-                      
-                      <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end'}}>
-                          <button type="button" className="btn" onClick={handleCancelEdit} style={{borderColor: 'transparent', color: 'var(--color-text-muted)'}}>Cancel</button>
-                          <button type="submit" className="btn btn-primary">Save Item</button>
-                      </div>
-                  </form>
-              )}
+                      )}
+                  </div>
 
-              {filteredMenuItems.length === 0 && (
-                  <div style={{background: 'var(--color-surface-light)', padding: '3rem', borderRadius: '12px', textAlign: 'center', color: 'var(--color-text-muted)'}}>
-                      No menu items found. {searchQuery ? 'Try a different search query.' : 'Add some dishes to start!'}
-                  </div>
-              )}
-              
-              {filteredMenuItems.length > 0 && (
-                  <div style={{ background: 'var(--color-surface-light)', borderRadius: '12px', border: 'var(--glass-border)', overflow: 'hidden' }}>
-                    <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left'}}>
-                      <thead>
-                        <tr style={{background: 'rgba(0,0,0,0.2)'}}>
-                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Dish</th>
-                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Category</th>
-                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Description</th>
-                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Price</th>
-                          <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem', textAlign: 'right'}}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredMenuItems.map((item, index) => (
-                          <tr 
-                              key={item.id} 
-                              style={{
-                                  borderTop: '1px solid rgba(255,255,255,0.05)',
-                                  background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'
-                              }}
-                          >
-                            <td style={{padding: '1rem 1.5rem', fontWeight: 'bold'}}>{item.name}</td>
-                            <td style={{padding: '1rem 1.5rem', fontSize: '0.85rem', color: 'var(--color-accent)'}}>{item.category || 'Uncategorized'}</td>
-                            <td style={{padding: '1rem 1.5rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', maxWidth: '300px'}}>{item.desc}</td>
-                            <td style={{padding: '1rem 1.5rem', color: 'var(--color-accent)'}}>₹{Number(item.price).toFixed(2)}</td>
-                            <td style={{padding: '1rem 1.5rem', textAlign: 'right'}}>
-                                <div style={{display: 'flex', gap: '0.8rem', justifyContent: 'flex-end'}}>
-                                    <button onClick={() => handleEditClick(item)} style={{background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)'}}>
-                                        <Edit2 size={18} />
-                                    </button>
-                                    <button onClick={() => handleDeleteMenu(item.id)} style={{background: 'none', border: 'none', cursor: 'pointer', color: '#ff4444'}}>
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  {(isAdding || editingItem) && (
+                      <form onSubmit={handleSaveMenu} style={{ background: 'var(--color-surface-light)', padding: '2rem', borderRadius: '12px', border: 'var(--glass-border)', marginBottom: '2rem' }}>
+                          <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
+                              <h4>{isAdding ? 'Add New Dish' : 'Edit Dish'}</h4>
+                              <button type="button" onClick={handleCancelEdit} style={{color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer'}}><X size={20}/></button>
+                          </div>
+                          
+                          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
+                              <div>
+                                  <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'}}>Dish Name</label>
+                                  <input type="text" className="form-input" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Shahi Paneer" />
+                              </div>
+                              <div>
+                                  <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'}}>Category</label>
+                                  <input type="text" className="form-input" required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="e.g. Indian Rasoi" />
+                              </div>
+                              <div>
+                                  <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'}}>Price (₹)</label>
+                                  <input type="number" step="1" min="0" className="form-input" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="e.g. 240" />
+                              </div>
+                          </div>
+                          <div style={{marginBottom: '2rem'}}>
+                              <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'}}>Description</label>
+                              <textarea className="form-input" required value={formData.desc} onChange={e => setFormData({...formData, desc: e.target.value})} placeholder="Detailed description of spices, ingredients..." rows={3}></textarea>
+                          </div>
+                          
+                          <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end'}}>
+                              <button type="button" className="btn" onClick={handleCancelEdit} style={{borderColor: 'transparent', color: 'var(--color-text-muted)'}}>Cancel</button>
+                              <button type="submit" className="btn btn-primary">Save Item</button>
+                          </div>
+                      </form>
+                  )}
+
+                  {filteredMenuItems.length === 0 && (
+                      <div style={{background: 'var(--color-surface-light)', padding: '3rem', borderRadius: '12px', textAlign: 'center', color: 'var(--color-text-muted)'}}>
+                          No menu items found. {searchQuery ? 'Try a different search query.' : 'Add some dishes to start!'}
+                      </div>
+                  )}
+                  
+                  {filteredMenuItems.length > 0 && (
+                      <div style={{ background: 'var(--color-surface-light)', borderRadius: '12px', border: 'var(--glass-border)', overflow: 'hidden' }}>
+                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left'}}>
+                          <thead>
+                            <tr style={{background: 'rgba(0,0,0,0.2)'}}>
+                              <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Dish</th>
+                              <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Category</th>
+                              <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Description</th>
+                              <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem'}}>Price</th>
+                              <th style={{padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontSize: '0.9rem', textAlign: 'right'}}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredMenuItems.map((item, index) => (
+                              <tr 
+                                  key={item.id} 
+                                  style={{
+                                      borderTop: '1px solid rgba(255,255,255,0.05)',
+                                      background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'
+                                  }}
+                              >
+                                <td style={{padding: '1rem 1.5rem', fontWeight: 'bold'}}>{item.name}</td>
+                                <td style={{padding: '1rem 1.5rem', fontSize: '0.85rem', color: 'var(--color-accent)'}}>{item.category || 'Uncategorized'}</td>
+                                <td style={{padding: '1rem 1.5rem', fontSize: '0.85rem', color: 'var(--color-text-muted)', maxWidth: '300px'}}>{item.desc}</td>
+                                <td style={{padding: '1rem 1.5rem', color: 'var(--color-accent)'}}>₹{Number(item.price).toFixed(2)}</td>
+                                <td style={{padding: '1rem 1.5rem', textAlign: 'right'}}>
+                                    <div style={{display: 'flex', gap: '0.8rem', justifyContent: 'flex-end'}}>
+                                        <button onClick={() => handleEditClick(item)} style={{background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)'}}>
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button onClick={() => handleDeleteMenu(item.id)} style={{background: 'none', border: 'none', cursor: 'pointer', color: '#ff4444'}}>
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                  )}
+                </>
               )}
           </div>
       )}
