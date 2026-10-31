@@ -75,6 +75,17 @@ export default function AdminDashboard({ onNavigateHome }) {
     return match ? match[1] || match[0] : null;
   };
 
+  // Safe helper to format order IDs cleanly without throwing
+  const formatOrderId = (id) => {
+    if (!id) return 'ORD';
+    const str = String(id);
+    const parts = str.split('-');
+    if (parts.length > 1 && parts[1]) {
+      return parts[1].slice(-6);
+    }
+    return str.slice(-6);
+  };
+
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -83,8 +94,10 @@ export default function AdminDashboard({ onNavigateHome }) {
         setOrders(prevOrders => {
           if (prevOrders.length > 0 && fetchedOrders.length > prevOrders.length) {
             const newest = fetchedOrders[0];
-            const itemsCount = newest.items ? newest.items.reduce((s, i) => s + (i.quantity || 1), 0) : 0;
-            setAlarmMessage(`🚨 NEW FOOD ORDER #${newest.id.split('-')[1]?.slice(-6) || 'NEW'} (₹${newest.total}) with ${itemsCount} items!`);
+            const itemsCount = Array.isArray(newest?.items) ? newest.items.reduce((s, i) => s + (i.quantity || 1), 0) : 0;
+            const displayId = formatOrderId(newest?.id);
+            const total = Number(newest?.total ?? newest?.totalAmount ?? 0);
+            setAlarmMessage(`🚨 NEW FOOD ORDER #${displayId} (₹${total}) with ${itemsCount} items!`);
             setAlarmTargetTab('overview');
             setIsAlarmRinging(true);
           }
@@ -137,7 +150,7 @@ export default function AdminDashboard({ onNavigateHome }) {
   }, [isAlarmRinging]);
 
   // --- OVERVIEW DATA ---
-  const totalRevenue = orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + (Number(order.total ?? order.totalAmount ?? 0) || 0), 0);
   const totalOrders = orders.length;
   const averageOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
@@ -150,9 +163,9 @@ export default function AdminDashboard({ onNavigateHome }) {
       chartDataMap[dateString] = 0;
   }
   orders.forEach(order => {
-      const dateString = new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const dateString = new Date(order.date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       if (chartDataMap[dateString] !== undefined) {
-          chartDataMap[dateString] += Number(order.total) || 0;
+          chartDataMap[dateString] += Number(order.total ?? order.totalAmount ?? 0) || 0;
       }
   });
   const chartData = Object.keys(chartDataMap).map(key => ({ name: key, revenue: chartDataMap[key] }));
@@ -636,7 +649,7 @@ export default function AdminDashboard({ onNavigateHome }) {
 
                           return (
                             <tr 
-                                key={order.id} 
+                                key={order.id || `order-${index}`} 
                                 style={{
                                     borderTop: '1px solid rgba(255,255,255,0.06)',
                                     background: isSelected ? 'rgba(201, 168, 107, 0.1)' : (index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)'),
@@ -656,19 +669,19 @@ export default function AdminDashboard({ onNavigateHome }) {
                               {/* Order ID & Date */}
                               <td style={{padding: '1.2rem'}}>
                                 <div style={{color: 'var(--color-accent)', fontWeight: 'bold', fontSize: '1rem'}}>
-                                  #{order.id.split('-')[1]?.slice(-6) || order.id.slice(-6)}
+                                  #{formatOrderId(order.id)}
                                 </div>
                                 <div style={{fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '4px'}}>
-                                  {new Date(order.date).toLocaleDateString()}
+                                  {new Date(order.date || Date.now()).toLocaleDateString()}
                                   <br/>
-                                  {new Date(order.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {new Date(order.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                               </td>
 
                               {/* Customer Details */}
                               <td style={{padding: '1.2rem'}}>
                                 <div style={{fontWeight: 600, color: '#F7F5F0', fontSize: '0.9rem'}}>
-                                  {order.userEmail}
+                                  {order.userEmail || 'Customer'}
                                 </div>
                                 {phone && (
                                   <div style={{marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center'}}>
@@ -679,7 +692,7 @@ export default function AdminDashboard({ onNavigateHome }) {
                                       <Phone size={12} /> {phone}
                                     </a>
                                     <a 
-                                      href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello from Shree Restaurant regarding your order #${order.id.split('-')[1]?.slice(-6)}!`)}`}
+                                      href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello from Shree Restaurant regarding your order #${formatOrderId(order.id)}!`)}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       style={{color: '#25D366', display: 'flex', alignItems: 'center'}}
@@ -781,7 +794,7 @@ export default function AdminDashboard({ onNavigateHome }) {
 
                               {/* Total Price */}
                               <td style={{padding: '1.2rem', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem', color: '#F7F5F0'}}>
-                                ₹{Number(order.total || 0).toFixed(2)}
+                                ₹{Number(order.total ?? order.totalAmount ?? 0).toFixed(2)}
                               </td>
 
                               {/* View KOT / Slip */}
@@ -1318,10 +1331,10 @@ export default function AdminDashboard({ onNavigateHome }) {
                 Shree Restaurant • Kitchen & Delivery Slip
               </span>
               <h2 style={{fontFamily: 'var(--font-serif)', fontSize: '1.8rem', margin: '4px 0 0 0'}}>
-                Order #{selectedOrder.id.split('-')[1]?.slice(-6) || selectedOrder.id.slice(-6)}
+                Order #{formatOrderId(selectedOrder.id)}
               </h2>
               <div style={{fontSize: '0.85rem', color: '#B2ADA3', marginTop: '4px'}}>
-                {new Date(selectedOrder.date).toLocaleDateString()} at {new Date(selectedOrder.date).toLocaleTimeString()}
+                {new Date(selectedOrder.date || Date.now()).toLocaleDateString()} at {new Date(selectedOrder.date || Date.now()).toLocaleTimeString()}
               </div>
             </div>
 
@@ -1360,7 +1373,7 @@ export default function AdminDashboard({ onNavigateHome }) {
                     <Phone size={14} /> Call Customer
                   </a>
                   <a
-                    href={`https://wa.me/${extractPhone(selectedOrder.deliveryAddress).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello! This is Shree Restaurant regarding your food order #${selectedOrder.id.split('-')[1]?.slice(-6)}. Your food is being prepared!`)}`}
+                    href={`https://wa.me/${extractPhone(selectedOrder.deliveryAddress).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello! This is Shree Restaurant regarding your food order #${formatOrderId(selectedOrder.id)}. Your food is being prepared!`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -1427,7 +1440,7 @@ export default function AdminDashboard({ onNavigateHome }) {
               <div>
                 <span style={{fontSize: '0.8rem', color: '#B2ADA3'}}>Grand Total to Collect / Paid:</span>
                 <div style={{fontSize: '1.6rem', fontWeight: 'bold', color: '#DEC085'}}>
-                  ₹{Number(selectedOrder.total || 0).toFixed(2)}
+                  ₹{Number(selectedOrder.total ?? selectedOrder.totalAmount ?? 0).toFixed(2)}
                 </div>
               </div>
               {selectedOrder.verificationKey && (

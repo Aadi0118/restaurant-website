@@ -12,6 +12,16 @@ export default function OrderHistory({ user }) {
     }
   }, [user]);
 
+  const formatOrderId = (id) => {
+    if (!id) return 'ORD';
+    const str = String(id);
+    const parts = str.split('-');
+    if (parts.length > 1 && parts[1]) {
+      return parts[1].slice(-6);
+    }
+    return str.slice(-6);
+  };
+
   if (orders.length === 0) {
     return (
       <div className="cart-container animate-on-load">
@@ -25,17 +35,19 @@ export default function OrderHistory({ user }) {
     <div className="cart-container animate-on-load" style={{maxWidth: '800px'}}>
       <h2>Your Past Orders</h2>
       <div className="orders-list">
-        {orders.map(order => (
-          <div key={order.id} className="order-card" style={{padding: '1.5rem', background: 'var(--color-surface-light)', borderRadius: '8px', marginBottom: '1.5rem'}}>
+        {orders.map((order, idx) => (
+          <div key={order.id || `order-${idx}`} className="order-card" style={{padding: '1.5rem', background: 'var(--color-surface-light)', borderRadius: '8px', marginBottom: '1.5rem'}}>
             <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', marginBottom: '1rem'}}>
               <div>
-                <strong>Order #{order.id.split('-')[1]}</strong>
+                <strong>Order #{formatOrderId(order.id)}</strong>
                 <p style={{fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: 0}}>
-                  {new Date(order.date).toLocaleDateString()} at {new Date(order.date).toLocaleTimeString()}
+                  {new Date(order.date || Date.now()).toLocaleDateString()} at {new Date(order.date || Date.now()).toLocaleTimeString()}
                 </p>
               </div>
               <div style={{textAlign: 'right'}}>
-                <strong style={{color: 'var(--color-accent)', fontSize: '1.2rem'}}>₹{order.total.toFixed(2)}</strong>
+                <strong style={{color: 'var(--color-accent)', fontSize: '1.2rem'}}>
+                  ₹{Number(order.total ?? order.totalAmount ?? 0).toFixed(2)}
+                </strong>
                 <div style={{marginTop: '4px'}}>
                   <span style={{
                     fontSize: '0.75rem',
@@ -71,10 +83,10 @@ export default function OrderHistory({ user }) {
             </div>
 
             <ul style={{margin: 0, padding: 0, listStyle: 'none'}}>
-              {order.items.map(item => (
-                <li key={item.id} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem'}}>
-                  <span>{item.quantity}x {item.name}</span>
-                  <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+              {(Array.isArray(order.items) ? order.items : []).map((item, itemIdx) => (
+                <li key={item.id || itemIdx} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem'}}>
+                  <span>{item.quantity || 1}x {item.name || 'Dish'}</span>
+                  <span>₹{((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}</span>
                 </li>
               ))}
             </ul>

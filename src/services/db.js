@@ -158,9 +158,102 @@ export const updateOrderStatus = async (orderId, status) => {
   return updatedOrders.find(o => o.id === orderId);
 };
 
+// --- NORMALIZATION HELPERS ---
+
+export const normalizeOrder = (order, index = 0) => {
+  if (!order || typeof order !== 'object') {
+    return {
+      id: `ord-fallback-${Date.now()}-${index}`,
+      userId: 'guest',
+      userEmail: 'Customer',
+      items: [],
+      total: 0,
+      deliveryAddress: 'Not specified',
+      utr: null,
+      status: 'pending',
+      verificationKey: '',
+      date: new Date().toISOString()
+    };
+  }
+
+  const rawId = order.id || order.orderNumber || order._id || `ord-${Date.now()}-${index}`;
+  const id = String(rawId);
+  const total = Number(order.total ?? order.totalAmount ?? 0) || 0;
+  const items = Array.isArray(order.items) ? order.items : [];
+  const status = (order.status || 'pending').toLowerCase();
+  const date = order.date || order.createdAt || new Date().toISOString();
+  const userEmail = order.userEmail || order.customerEmail || (order.tableId ? `Table Order (${order.tableId})` : 'Customer');
+  const deliveryAddress = order.deliveryAddress || (order.tableId ? `Table #${order.tableId}` : 'Dine-In / Counter');
+  const verificationKey = order.verificationKey ? String(order.verificationKey) : '';
+
+  return {
+    ...order,
+    id,
+    userId: order.userId || 'guest',
+    userEmail,
+    items,
+    total,
+    deliveryAddress,
+    status,
+    verificationKey,
+    date
+  };
+};
+
+export const normalizeReservation = (res, index = 0) => {
+  if (!res || typeof res !== 'object') {
+    return {
+      id: `res-fallback-${Date.now()}-${index}`,
+      code: `RES-${Date.now()}-${index}`,
+      name: 'Guest',
+      guests: 2,
+      date: new Date().toISOString().split('T')[0],
+      time: '19:30',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+  }
+  const id = String(res.id || res._id || res.code || `res-${Date.now()}-${index}`);
+  const code = String(res.code || id);
+  return {
+    ...res,
+    id,
+    code,
+    name: res.name || 'Guest',
+    guests: Number(res.guests) || 2,
+    date: res.date || new Date().toISOString().split('T')[0],
+    time: res.time || '19:30',
+    status: (res.status || 'pending').toLowerCase(),
+    createdAt: res.createdAt || res.date || new Date().toISOString()
+  };
+};
+
+export const normalizeMenuItem = (item, index = 0) => {
+  if (!item || typeof item !== 'object') {
+    return {
+      id: `menu-fallback-${Date.now()}-${index}`,
+      name: 'Special Item',
+      desc: '',
+      price: 100,
+      category: 'Uncategorized'
+    };
+  }
+  return {
+    ...item,
+    id: String(item.id || item._id || `menu-${Date.now()}-${index}`),
+    name: String(item.name || 'Specialty Dish'),
+    desc: String(item.desc || item.description || ''),
+    price: Number(item.price) || 0,
+    category: String(item.category || 'Uncategorized').trim()
+  };
+};
+
 export const getUserOrders = async (userId) => {
   initializeDB();
-  const localOrders = JSON.parse(localStorage.getItem('orders') || '[]').filter(o => o.userId === userId);
+  const rawLocal = JSON.parse(localStorage.getItem('orders') || '[]');
+  const localOrders = (Array.isArray(rawLocal) ? rawLocal : [])
+    .map((o, idx) => normalizeOrder(o, idx))
+    .filter(o => o.userId === userId);
 
   try {
     const controller = new AbortController();
@@ -171,7 +264,10 @@ export const getUserOrders = async (userId) => {
     });
     clearTimeout(timeoutId);
     if (response.ok) {
-      const remoteOrders = await response.json();
+      const rawRemote = await response.json();
+      const remoteOrders = Array.isArray(rawRemote)
+        ? rawRemote.map((o, idx) => normalizeOrder(o, idx))
+        : [];
       const map = new Map();
       localOrders.forEach(o => map.set(o.id, o));
       remoteOrders.forEach(o => map.set(o.id, o));
@@ -186,7 +282,8 @@ export const getUserOrders = async (userId) => {
 
 export const getAllOrders = async () => {
   initializeDB();
-  const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+  const rawLocal = JSON.parse(localStorage.getItem('orders') || '[]');
+  const localOrders = (Array.isArray(rawLocal) ? rawLocal : []).map((o, idx) => normalizeOrder(o, idx));
 
   try {
     const controller = new AbortController();
@@ -197,7 +294,10 @@ export const getAllOrders = async () => {
     });
     clearTimeout(timeoutId);
     if (response.ok) {
-      const remoteOrders = await response.json();
+      const rawRemote = await response.json();
+      const remoteOrders = Array.isArray(rawRemote)
+        ? rawRemote.map((o, idx) => normalizeOrder(o, idx))
+        : [];
       const map = new Map();
       localOrders.forEach(o => map.set(o.id, o));
       remoteOrders.forEach(o => map.set(o.id, o));
@@ -262,7 +362,8 @@ export const saveReservation = async (reservationData) => {
 
 export const getAllReservations = async () => {
   initializeDB();
-  const localReservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+  const rawLocal = JSON.parse(localStorage.getItem('reservations') || '[]');
+  const localReservations = (Array.isArray(rawLocal) ? rawLocal : []).map((r, idx) => normalizeReservation(r, idx));
 
   try {
     const controller = new AbortController();
@@ -273,7 +374,10 @@ export const getAllReservations = async () => {
     });
     clearTimeout(timeoutId);
     if (response.ok) {
-      const remoteReservations = await response.json();
+      const rawRemote = await response.json();
+      const remoteReservations = Array.isArray(rawRemote)
+        ? rawRemote.map((r, idx) => normalizeReservation(r, idx))
+        : [];
       const map = new Map();
       localReservations.forEach(r => map.set(r.code || r.id, r));
       remoteReservations.forEach(r => map.set(r.code || r.id, r));
@@ -332,8 +436,9 @@ export const getMenuItems = async () => {
     const response = await fetch(`${API_BASE}/menuItems`, { signal: controller.signal });
     clearTimeout(timeoutId);
     if (!response.ok) throw new Error('Failed to fetch menu items');
-    const items = await response.json();
-    if (items && items.length > 0) {
+    const rawItems = await response.json();
+    if (rawItems && Array.isArray(rawItems) && rawItems.length > 0) {
+      const items = rawItems.map((item, idx) => normalizeMenuItem(item, idx));
       localStorage.setItem('menuItems', JSON.stringify(items));
       return items;
     }
@@ -341,7 +446,8 @@ export const getMenuItems = async () => {
     console.warn('API getMenuItems fallback to local storage:', err.message);
   }
   initializeDB();
-  return JSON.parse(localStorage.getItem('menuItems') || '[]');
+  const cached = JSON.parse(localStorage.getItem('menuItems') || '[]');
+  return Array.isArray(cached) ? cached.map((item, idx) => normalizeMenuItem(item, idx)) : [];
 };
 
 export const addMenuItem = async (name, desc, price, category = 'Uncategorized') => {

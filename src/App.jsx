@@ -51,22 +51,27 @@ function App() {
 
   // Restore session
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('view') === 'payment-callback') {
-        setCurrentView('payment-callback');
-      } else if (parsedUser.role === 'admin') {
-        setCurrentView('admin');
+    try {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('view') === 'payment-callback') {
+          setCurrentView('payment-callback');
+        } else if (parsedUser.role === 'admin') {
+          setCurrentView('admin');
+        }
+      } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('view') === 'payment-callback') {
+          setCurrentView('payment-callback');
+        }
       }
-    } else {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('view') === 'payment-callback') {
-        setCurrentView('payment-callback');
-      }
+    } catch (e) {
+      console.warn('Failed to parse currentUser from localStorage:', e);
+      localStorage.removeItem('currentUser');
     }
   }, []);
 
